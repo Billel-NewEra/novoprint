@@ -1,0 +1,111 @@
+{% extends "base.html" %}
+{% block title %}Clients{% endblock %}
+{% block content %}
+
+<h2 class="mb-4">👥 Gestion des Clients</h2>
+
+<!-- Formulaire d’ajout de client -->
+<div class="card mb-4 shadow-sm">
+  <div class="card-body">
+    <h5 class="card-title">➕ Ajouter un client</h5>
+    <form method="POST" class="row g-2">
+      <div class="col-md-3">
+        <input type="text" name="company_name" class="form-control" placeholder="Entreprise" required>
+      </div>
+      <div class="col-md-3">
+        <input type="text" name="contact_name" class="form-control" placeholder="Contact" required>
+      </div>
+      <div class="col-md-2">
+        <input type="text" name="phone" class="form-control" placeholder="Tel">
+      </div>
+      <div class="col-md-3">
+        <input type="email" name="email" class="form-control" placeholder="Email" required>
+      </div>
+      <div class="col-12 mt-3">
+        <button type="submit" class="btn btn-success">✅ Ajouter</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Liste des clients -->
+<div class="card shadow-sm">
+  <div class="card-body">
+    <h5 class="card-title">📋 Liste des Clients</h5>
+    <table class="table table-striped align-middle">
+      <thead class="table-dark">
+        <tr>
+          <th>ID</th>
+          <th>Entreprise</th>
+          <th>Contact</th>
+          <th>Tel</th>
+          <th>Email</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for c in clients %}
+        <tr>
+          <td>{{ c.id }}</td>
+          <td>{{ c.company_name }}</td>
+          <td>{{ c.contact_name }}</td>
+          <td>{{ c.phone }}</td>
+          <td>{{ c.email }}</td>
+          <td>
+            <a href="{{ url_for('client_orders', client_id=c.id) }}" class="btn btn-sm btn-outline-primary">
+              📦 Voir commandes
+            </a>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+
+    <!-- Pagination améliorée -->
+    <nav aria-label="Pagination clients">
+      <ul class="pagination justify-content-center mt-3">
+
+        <!-- Précédent -->
+        {% if page > 1 %}
+        <li class="page-item">
+          <a class="page-link" href="{{ url_for('clients', page=page-1) }}">Précédent</a>
+        </li>
+        {% endif %}
+
+        <!-- Première page -->
+        {% if page > 3 %}
+        <li class="page-item">
+          <a class="page-link" href="{{ url_for('clients', page=1) }}">1</a>
+        </li>
+        <li class="page-item disabled"><span class="page-link">…</span></li>
+        {% endif %}
+
+        <!-- Pages autour -->
+        {% for p in range(page-2, page+3) %}
+          {% if p > 0 and p <= total_pages %}
+          <li class="page-item {% if p == page %}active{% endif %}">
+            <a class="page-link" href="{{ url_for('clients', page=p) }}">{{ p }}</a>
+          </li>
+          {% endif %}
+        {% endfor %}
+
+        <!-- Dernière page -->
+        {% if page < total_pages-2 %}
+        <li class="page-item disabled"><span class="page-link">…</span></li>
+        <li class="page-item">
+          <a class="page-link" href="{{ url_for('clients', page=total_pages) }}">{{ total_pages }}</a>
+        </li>
+        {% endif %}
+
+        <!-- Suivant -->
+        {% if page < total_pages %}
+        <li class="page-item">
+          <a class="page-link" href="{{ url_for('clients', page=page+1) }}">Suivant</a>
+        </li>
+        {% endif %}
+      </ul>
+    </nav>
+  </div>
+</div>
+
+{% endblock %}

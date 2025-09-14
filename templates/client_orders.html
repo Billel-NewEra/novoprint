@@ -1,0 +1,96 @@
+{% extends "base.html" %}
+{% block title %}Commandes de {{ client.company_name }}{% endblock %}
+{% block content %}
+
+<h2 class="mb-4">📦 Commandes du client : {{ client.company_name }}</h2>
+
+<div class="card shadow-sm">
+  <div class="card-body">
+    <h5 class="card-title">📋 Liste des commandes</h5>
+
+    {% if orders %}
+    <table class="table table-striped align-middle">
+      <thead class="table-dark">
+        <tr>
+          <th>NR</th>
+          <th>Commande</th>
+          <th>Produit</th>
+          <th>Quantité</th>
+          <th>Situation</th>
+          <th>Utilisateur</th>
+          <th>Date</th>
+          <th>Observation</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for o in orders %}
+        <tr>
+          <td>{{ o.nr }}</td>
+          <td>{{ o.num_commande }}</td>
+          <td>{{ o.produit }}</td>
+          <td>{{ o.somme_qte }}</td>
+          <td>{{ o.situation }}</td>
+          <td>{{ o.utilisateur }}</td>
+          <td>{{ o.date_reservation }}</td>
+          <td>{{ o.observation }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+
+    <!-- Pagination améliorée -->
+    <nav aria-label="Pagination commandes client">
+      <ul class="pagination justify-content-center mt-3">
+
+        <!-- Précédent -->
+        {% if page > 1 %}
+        <li class="page-item">
+          <a class="page-link" href="{{ url_for('client_orders', client_id=client.id, page=page-1) }}">Précédent</a>
+        </li>
+        {% endif %}
+
+        <!-- Première page -->
+        {% if page > 3 %}
+        <li class="page-item">
+          <a class="page-link" href="{{ url_for('client_orders', client_id=client.id, page=1) }}">1</a>
+        </li>
+        <li class="page-item disabled"><span class="page-link">…</span></li>
+        {% endif %}
+
+        <!-- Pages autour -->
+        {% for p in range(page-2, page+3) %}
+          {% if p > 0 and p <= total_pages %}
+          <li class="page-item {% if p == page %}active{% endif %}">
+            <a class="page-link" href="{{ url_for('client_orders', client_id=client.id, page=p) }}">{{ p }}</a>
+          </li>
+          {% endif %}
+        {% endfor %}
+
+        <!-- Dernière page -->
+        {% if page < total_pages-2 %}
+        <li class="page-item disabled"><span class="page-link">…</span></li>
+        <li class="page-item">
+          <a class="page-link" href="{{ url_for('client_orders', client_id=client.id, page=total_pages) }}">{{ total_pages }}</a>
+        </li>
+        {% endif %}
+
+        <!-- Suivant -->
+        {% if page < total_pages %}
+        <li class="page-item">
+          <a class="page-link" href="{{ url_for('client_orders', client_id=client.id, page=page+1) }}">Suivant</a>
+        </li>
+        {% endif %}
+      </ul>
+    </nav>
+    {% else %}
+      <p class="text-muted">⚠️ Aucune commande trouvée pour ce client.</p>
+    {% endif %}
+  </div>
+</div>
+
+<!-- Bouton retour -->
+<div class="mt-3">
+  <a href="{{ url_for('clients') }}" class="btn btn-secondary">⬅️ Retour aux clients</a>
+</div>
+
+{% endblock %}
