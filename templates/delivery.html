@@ -1,57 +1,57 @@
 {% extends "base.html" %}
-{% block title %}Clients{% endblock %}
+{% block title %}Delivery{% endblock %}
 {% block content %}
 
-<h2 class="mb-4">👥 Gestion des Clients</h2>
+<h2 class="mb-4">🚚 Liste des Livraisons</h2>
 
 <div class="card shadow-sm">
   <div class="card-body">
-    <h5 class="card-title">📋 Liste des Clients</h5>
     <div class="table-responsive">
       <table class="table table-striped align-middle table-bordered">
         <thead class="table-dark">
           <tr>
-            <th>ID</th>
-            <th>Entreprise</th>
-            <th>Contact</th>
-            <th>Tel</th>
-            <th>Email</th>
-            <th>Actions</th>
+            <th>NL</th>
+            <th>Client</th>
+            <th>Produit</th>
+            <th>Quantité</th>
+            <th>Montant</th>
+            <th>Réservation</th>
+            <th>Utilisateur</th>
+            <th>Date livraison</th>
+            <th>Facture</th>
+            <th>Observation</th>
           </tr>
         </thead>
         <tbody>
-          {% for c in clients %}
+          {% for d in delivery %}
           <tr>
-            <td>{{ c.id }}</td>
-            <td>{{ c.company_name }}</td>
-            <td>{{ c.contact_name }}</td>
-            <td>{{ c.phone }}</td>
-            <td>{{ c.email }}</td>
-            <td>
-              <a href="{{ url_for('client_orders', client_id=c.id) }}" class="btn btn-sm btn-outline-primary">
-                📦 Voir commandes
-              </a>
-              <a href="{{ url_for('client_delivery', client_id=c.id) }}" class="btn btn-sm btn-outline-warning ms-1">
-                🚚 Voir livraisons
-              </a>
-            </td>
+            <td>{{ d.nl }}</td>
+            <td>{{ d.client }}</td>
+            <td>{{ d.produit }}</td>
+            <td>{{ d.qte }}</td>
+            <td>{{ d.montant }}</td>
+            <td>{{ d.num_reservation }}</td>
+            <td>{{ d.utilisateur }}</td>
+            <td>{{ d.date_livraison }}</td>
+            <td>{{ d.facture }}</td>
+            <td>{{ d.observation }}</td>
           </tr>
           {% endfor %}
         </tbody>
       </table>
     </div>
 
-    <p class="text-muted mt-2">
-      Affichage {{ start }} – {{ end }} sur {{ total_clients }} clients
+    <p class="text-muted mt-2 text-center">
+      Affichage {{ start }} – {{ end }} sur {{ total_delivery }} livraisons
     </p>
 
-    <!-- Pagination améliorée -->
+    <!-- Pagination -->
     <nav aria-label="Page navigation">
       <ul class="pagination justify-content-center">
 
         {% if page > 1 %}
           <li class="page-item">
-            <a class="page-link" href="{{ url_for('clients', page=page-1) }}">Précédent</a>
+            <a class="page-link" href="{{ url_for('delivery', page=page-1) }}">Précédent</a>
           </li>
         {% endif %}
 
@@ -61,7 +61,7 @@
 
         {% if start_page > 1 %}
           <li class="page-item">
-            <a class="page-link" href="{{ url_for('clients', page=1) }}">1</a>
+            <a class="page-link" href="{{ url_for('delivery', page=1) }}">1</a>
           </li>
           {% if start_page > 2 %}
             <li class="page-item disabled"><span class="page-link">…</span></li>
@@ -70,7 +70,7 @@
 
         {% for p in range(start_page, end_page + 1) %}
           <li class="page-item {% if p == page %}active{% endif %}">
-            <a class="page-link" href="{{ url_for('clients', page=p) }}">{{ p }}</a>
+            <a class="page-link" href="{{ url_for('delivery', page=p) }}">{{ p }}</a>
           </li>
         {% endfor %}
 
@@ -79,13 +79,13 @@
             <li class="page-item disabled"><span class="page-link">…</span></li>
           {% endif %}
           <li class="page-item">
-            <a class="page-link" href="{{ url_for('clients', page=total_pages) }}">{{ total_pages }}</a>
+            <a class="page-link" href="{{ url_for('delivery', page=total_pages) }}">{{ total_pages }}</a>
           </li>
         {% endif %}
 
         {% if page < total_pages %}
           <li class="page-item">
-            <a class="page-link" href="{{ url_for('clients', page=page+1) }}">Suivant</a>
+            <a class="page-link" href="{{ url_for('delivery', page=page+1) }}">Suivant</a>
           </li>
         {% endif %}
 

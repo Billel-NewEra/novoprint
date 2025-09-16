@@ -1,45 +1,44 @@
 {% extends "base.html" %}
-{% block title %}Tableau de bord{% endblock %}
+{% block title %}Dashboard{% endblock %}
 {% block content %}
 
-<h2 class="mb-4">📊 Tableau de bord</h2>
+<h2 class="mb-4">📊 Tableau de Bord</h2>
 
 <div class="row g-4">
+
   <!-- Clients -->
   <div class="col-md-4">
-    <div class="card text-white bg-primary shadow-sm">
+    <div class="card text-center shadow-sm border-success">
       <div class="card-body">
-        <h5 class="card-title">👥 Clients</h5>
-        <p class="display-6">{{ total_clients }}</p>
+        <h5 class="card-title text-success">👥 Clients</h5>
+        <p class="display-6 fw-bold">{{ total_clients }}</p>
+        <a href="{{ url_for('clients') }}" class="btn btn-outline-success btn-sm">Voir les clients</a>
       </div>
     </div>
   </div>
 
   <!-- Commandes -->
   <div class="col-md-4">
-    <div class="card text-white bg-success shadow-sm">
+    <div class="card text-center shadow-sm border-primary">
       <div class="card-body">
-        <h5 class="card-title">📦 Commandes</h5>
-        <p class="display-6">{{ total_orders }}</p>
+        <h5 class="card-title text-primary">📦 Commandes</h5>
+        <p class="display-6 fw-bold">{{ total_orders }}</p>
+        <a href="{{ url_for('orders') }}" class="btn btn-outline-primary btn-sm">Voir les commandes</a>
       </div>
     </div>
   </div>
 
-  <!-- Quantités -->
+  <!-- Livraisons -->
   <div class="col-md-4">
-    <div class="card text-white bg-warning shadow-sm">
+    <div class="card text-center shadow-sm border-warning">
       <div class="card-body">
-        <h5 class="card-title">🔢 Quantités commandées</h5>
-        <p class="display-6">{{ total_qte }}</p>
+        <h5 class="card-title text-warning">🚚 Livraisons</h5>
+        <p class="display-6 fw-bold">{{ total_delivery }}</p>
+        <a href="{{ url_for('delivery') }}" class="btn btn-outline-warning btn-sm">Voir les livraisons</a>
       </div>
     </div>
   </div>
-</div>
 
-<!-- Boutons rapides -->
-<div class="mt-5">
-  <a href="{{ url_for('clients') }}" class="btn btn-outline-primary btn-lg me-3">👥 Voir les clients</a>
-  <a href="{{ url_for('orders') }}" class="btn btn-outline-success btn-lg">📦 Voir les commandes</a>
 </div>
 
 {% endblock %}

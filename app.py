@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, redirect, url_for, flash
+from flask import Flask, render_template, request
 import sqlite3
 
 app = Flask(__name__)
@@ -18,7 +18,7 @@ def index():
 
     total_clients = conn.execute("SELECT COUNT(*) FROM client").fetchone()[0]
     total_orders = conn.execute("SELECT COUNT(*) FROM orders").fetchone()[0]
-    total_qte = conn.execute("SELECT COALESCE(SUM(somme_qte), 0) FROM orders").fetchone()[0]
+    total_delivery = conn.execute("SELECT COUNT(*) FROM delivery").fetchone()[0]
 
     conn.close()
 
@@ -26,48 +26,22 @@ def index():
         "index.html",
         total_clients=total_clients,
         total_orders=total_orders,
-        total_qte=total_qte,
+        total_delivery=total_delivery
     )
 
 
-# ---- Clients (pagination + ajout) ----
-@app.route("/clients", methods=["GET", "POST"])
+# ---- Clients (pagination) ----
+@app.route("/clients")
 def clients():
     conn = get_db_connection()
 
-    if request.method == "POST":
-        company_name = request.form.get("company_name", "").strip()
-        contact_name = request.form.get("contact_name", "").strip()
-        phone = request.form.get("phone", "").strip()
-        email = request.form.get("email", "").strip().lower()
-
-        if not company_name or not contact_name or not email:
-            flash("⚠️ Company, contact and email are required.", "danger")
-            conn.close()
-            return redirect(url_for("clients"))
-
-        existing = conn.execute(
-            "SELECT N FROM client WHERE Email = ?", (email,)
-        ).fetchone()
-        if existing:
-            flash("⚠️ This email is already used by another client.", "danger")
-            conn.close()
-            return redirect(url_for("clients"))
-
-        conn.execute(
-            "INSERT INTO client (Entreprise, Contact, Tel, Email) VALUES (?, ?, ?, ?)",
-            (company_name, contact_name, phone, email),
-        )
-        conn.commit()
-        flash(f"✅ Client « {company_name} » ajouté.", "success")
-
-    # --- Pagination ---
     page = request.args.get("page", 1, type=int)
     per_page = 10
 
     clients_list = conn.execute(
         """
-        SELECT N AS id, Entreprise AS company_name, Contact AS contact_name, Tel AS phone, Email AS email
+        SELECT N AS id, Entreprise AS company_name, Contact AS contact_name, 
+               Tel AS phone, Email AS email
         FROM client
         ORDER BY N ASC
         LIMIT ? OFFSET ?
@@ -78,17 +52,23 @@ def clients():
     total_clients = conn.execute("SELECT COUNT(*) FROM client").fetchone()[0]
     total_pages = (total_clients + per_page - 1) // per_page
 
+    start = (page - 1) * per_page + 1 if total_clients > 0 else 0
+    end = min(page * per_page, total_clients)
+
     conn.close()
 
     return render_template(
         "clients.html",
         clients=clients_list,
         page=page,
-        total_pages=total_pages
+        total_pages=total_pages,
+        start=start,
+        end=end,
+        total_clients=total_clients
     )
 
 
-# ---- Orders (liste avec pagination) ----
+# ---- Orders (pagination) ----
 @app.route("/orders")
 def orders():
     conn = get_db_connection()
@@ -98,11 +78,11 @@ def orders():
 
     orders_list = conn.execute(
         """
-        SELECT nr, num_reservation, num_commande, client, produit, somme_qte,
-               situation, utilisateur, date_reservation, num_client,
-               observation, code_maquette
+        SELECT 
+            num_reservation, cmdl, client, produit, qte,
+            situation, reste
         FROM orders
-        ORDER BY date_reservation DESC
+        ORDER BY num_reservation ASC
         LIMIT ? OFFSET ?
         """,
         (per_page, (page - 1) * per_page),
@@ -111,17 +91,23 @@ def orders():
     total_orders = conn.execute("SELECT COUNT(*) FROM orders").fetchone()[0]
     total_pages = (total_orders + per_page - 1) // per_page
 
+    start = (page - 1) * per_page + 1 if total_orders > 0 else 0
+    end = min(page * per_page, total_orders)
+
     conn.close()
 
     return render_template(
         "orders.html",
         orders=orders_list,
         page=page,
-        total_pages=total_pages
+        total_pages=total_pages,
+        start=start,
+        end=end,
+        total_orders=total_orders
     )
 
 
-# ---- Orders by client (liste avec pagination) ----
+# ---- Orders by client (pagination) ----
 @app.route("/clients/<int:client_id>/orders")
 def client_orders(client_id):
     conn = get_db_connection()
@@ -130,31 +116,34 @@ def client_orders(client_id):
         "SELECT N AS id, Entreprise AS company_name FROM client WHERE N = ?",
         (client_id,)
     ).fetchone()
-
     if not client:
         conn.close()
         return "Client not found", 404
 
-    # --- Pagination ---
     page = request.args.get("page", 1, type=int)
     per_page = 10
 
     orders_list = conn.execute(
         """
-        SELECT nr, num_reservation, num_commande, produit, somme_qte,
-               situation, utilisateur, date_reservation, observation, code_maquette
+        SELECT 
+            num_reservation, cmdl, client, produit, qte,
+            situation, reste
         FROM orders
-        WHERE num_client = ?
-        ORDER BY date_reservation DESC
+        WHERE client = ?
+        ORDER BY num_reservation ASC
         LIMIT ? OFFSET ?
         """,
-        (client_id, per_page, (page - 1) * per_page),
+        (client["company_name"], per_page, (page - 1) * per_page),
     ).fetchall()
 
     total_orders = conn.execute(
-        "SELECT COUNT(*) FROM orders WHERE num_client = ?", (client_id,)
+        "SELECT COUNT(*) FROM orders WHERE client = ?",
+        (client["company_name"],)
     ).fetchone()[0]
     total_pages = (total_orders + per_page - 1) // per_page
+
+    start = (page - 1) * per_page + 1 if total_orders > 0 else 0
+    end = min(page * per_page, total_orders)
 
     conn.close()
     return render_template(
@@ -162,7 +151,149 @@ def client_orders(client_id):
         client=client,
         orders=orders_list,
         page=page,
-        total_pages=total_pages
+        total_pages=total_pages,
+        start=start,
+        end=end,
+        total_orders=total_orders
+    )
+
+
+# ---- Delivery (pagination) ----
+@app.route("/delivery")
+def delivery():
+    conn = get_db_connection()
+
+    page = request.args.get("page", 1, type=int)
+    per_page = 10
+
+    delivery_list = conn.execute(
+        """
+        SELECT 
+            nl, code_client, client, qte, montant, num_reservation,
+            utilisateur, date_livraison, facture, num_livraison,
+            observation, produit
+        FROM delivery
+        ORDER BY nl ASC
+        LIMIT ? OFFSET ?
+        """,
+        (per_page, (page - 1) * per_page),
+    ).fetchall()
+
+    total_delivery = conn.execute("SELECT COUNT(*) FROM delivery").fetchone()[0]
+    total_pages = (total_delivery + per_page - 1) // per_page
+
+    start = (page - 1) * per_page + 1 if total_delivery > 0 else 0
+    end = min(page * per_page, total_delivery)
+
+    conn.close()
+
+    return render_template(
+        "delivery.html",
+        delivery=delivery_list,
+        page=page,
+        total_pages=total_pages,
+        start=start,
+        end=end,
+        total_delivery=total_delivery
+    )
+
+
+# ---- Delivery by client (pagination) ----
+@app.route("/clients/<int:client_id>/delivery")
+def client_delivery(client_id):
+    conn = get_db_connection()
+
+    client = conn.execute(
+        "SELECT N AS id, Entreprise AS company_name FROM client WHERE N = ?",
+        (client_id,)
+    ).fetchone()
+    if not client:
+        conn.close()
+        return "Client not found", 404
+
+    page = request.args.get("page", 1, type=int)
+    per_page = 10
+
+    delivery_list = conn.execute(
+        """
+        SELECT 
+            nl, code_client, client, qte, montant, num_reservation,
+            utilisateur, date_livraison, facture, num_livraison,
+            observation, produit
+        FROM delivery
+        WHERE code_client = ?
+        ORDER BY nl ASC
+        LIMIT ? OFFSET ?
+        """,
+        (client_id, per_page, (page - 1) * per_page),
+    ).fetchall()
+
+    total_delivery = conn.execute(
+        "SELECT COUNT(*) FROM delivery WHERE code_client = ?",
+        (client_id,)
+    ).fetchone()[0]
+    total_pages = (total_delivery + per_page - 1) // per_page
+
+    start = (page - 1) * per_page + 1 if total_delivery > 0 else 0
+    end = min(page * per_page, total_delivery)
+
+    conn.close()
+    return render_template(
+        "client_delivery.html",
+        client=client,
+        delivery=delivery_list,
+        page=page,
+        total_pages=total_pages,
+        start=start,
+        end=end,
+        total_delivery=total_delivery
+    )
+
+
+# ---- Delivery by order (pagination + retour dynamique) ----
+@app.route("/orders/<int:order_id>/delivery")
+def order_delivery(order_id):
+    conn = get_db_connection()
+
+    page = request.args.get("page", 1, type=int)
+    per_page = 10
+    from_client = request.args.get("from_client")  # <-- param facultatif
+
+    delivery_list = conn.execute(
+        """
+        SELECT 
+            nl, code_client, client, qte, montant, num_reservation,
+            utilisateur, date_livraison, facture, num_livraison,
+            observation, produit
+        FROM delivery
+        WHERE num_reservation = ?
+        ORDER BY nl ASC
+        LIMIT ? OFFSET ?
+        """,
+        (order_id, per_page, (page - 1) * per_page),
+    ).fetchall()
+
+    total_delivery = conn.execute(
+        "SELECT COUNT(*) FROM delivery WHERE num_reservation = ?",
+        (order_id,)
+    ).fetchone()[0]
+    total_pages = (total_delivery + per_page - 1) // per_page
+
+    start = (page - 1) * per_page + 1 if total_delivery > 0 else 0
+    end = min(page * per_page, total_delivery)
+
+    conn.close()
+
+    return render_template(
+        "order_delivery.html",
+        order_id=order_id,
+        delivery=delivery_list,
+        page=page,
+        total_pages=total_pages,
+        start=start,
+        end=end,
+        total_delivery=total_delivery,
+        from_client=from_client  # <-- transmis au template
     )
 
 

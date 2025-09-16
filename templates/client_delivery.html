@@ -1,38 +1,31 @@
 {% extends "base.html" %}
-{% block title %}Commandes{% endblock %}
+{% block title %}Livraisons – {{ client.company_name }}{% endblock %}
 {% block content %}
 
-<h2 class="mb-4">📦 Liste des Commandes</h2>
+<h2 class="mb-4">🚚 Livraisons du client « {{ client.company_name }} »</h2>
 
 <table class="table table-striped align-middle">
   <thead class="table-dark">
     <tr>
-      <th>N° Cmd</th>
-      <th>CMDCL</th>
-      <th>Client</th>
+      <th>NL</th>
       <th>Produit</th>
       <th>Quantité</th>
-      <th>Situation</th>
-      <th>Reste</th>
-      <th>Actions</th>
+      <th>Montant</th>
+      <th>Date</th>
+      <th>Facture</th>
+      <th>Observation</th>
     </tr>
   </thead>
   <tbody>
-    {% for o in orders %}
+    {% for d in delivery %}
     <tr>
-      <td>{{ o.num_reservation }}</td>
-      <td>{{ o.cmdl }}</td>
-      <td>{{ o.client }}</td>
-      <td>{{ o.produit }}</td>
-      <td>{{ o.qte }}</td>
-      <td>{{ o.situation }}</td>
-      <td>{{ o.reste }}</td>
-      <td>
-        <a href="{{ url_for('order_delivery', order_id=o.num_reservation) }}" 
-           class="btn btn-sm btn-outline-warning">
-          🚚 Voir livraisons
-        </a>
-      </td>
+      <td>{{ d.nl }}</td>
+      <td>{{ d.produit }}</td>
+      <td>{{ d.qte }}</td>
+      <td>{{ d.montant }}</td>
+      <td>{{ d.date_livraison }}</td>
+      <td>{{ d.facture }}</td>
+      <td>{{ d.observation }}</td>
     </tr>
     {% endfor %}
   </tbody>
@@ -44,7 +37,7 @@
 
     {% if page > 1 %}
       <li class="page-item">
-        <a class="page-link" href="{{ url_for('orders', page=page-1) }}">Précédent</a>
+        <a class="page-link" href="{{ url_for('client_delivery', client_id=client.id, page=page-1) }}">Précédent</a>
       </li>
     {% endif %}
 
@@ -54,7 +47,7 @@
 
     {% if start_page > 1 %}
       <li class="page-item">
-        <a class="page-link" href="{{ url_for('orders', page=1) }}">1</a>
+        <a class="page-link" href="{{ url_for('client_delivery', client_id=client.id, page=1) }}">1</a>
       </li>
       {% if start_page > 2 %}
         <li class="page-item disabled"><span class="page-link">…</span></li>
@@ -63,7 +56,7 @@
 
     {% for p in range(start_page, end_page + 1) %}
       <li class="page-item {% if p == page %}active{% endif %}">
-        <a class="page-link" href="{{ url_for('orders', page=p) }}">{{ p }}</a>
+        <a class="page-link" href="{{ url_for('client_delivery', client_id=client.id, page=p) }}">{{ p }}</a>
       </li>
     {% endfor %}
 
@@ -72,13 +65,13 @@
         <li class="page-item disabled"><span class="page-link">…</span></li>
       {% endif %}
       <li class="page-item">
-        <a class="page-link" href="{{ url_for('orders', page=total_pages) }}">{{ total_pages }}</a>
+        <a class="page-link" href="{{ url_for('client_delivery', client_id=client.id, page=total_pages) }}">{{ total_pages }}</a>
       </li>
     {% endif %}
 
     {% if page < total_pages %}
       <li class="page-item">
-        <a class="page-link" href="{{ url_for('orders', page=page+1) }}">Suivant</a>
+        <a class="page-link" href="{{ url_for('client_delivery', client_id=client.id, page=page+1) }}">Suivant</a>
       </li>
     {% endif %}
 
@@ -86,7 +79,9 @@
 </nav>
 
 <p class="text-muted text-center">
-  Affichage {{ start }} – {{ end }} sur {{ total_orders }} résultats
+  Affichage {{ start }} – {{ end }} sur {{ total_delivery }} résultats
 </p>
+
+<a href="{{ url_for('clients') }}" class="btn btn-outline-secondary mt-3">⬅️ Retour à tous les clients</a>
 
 {% endblock %}
