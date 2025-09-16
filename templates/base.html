@@ -10,33 +10,34 @@
   <body>
 
     <!-- Navbar -->
-    <nav class="navbar navbar-expand-lg shadow-sm">
-      <div class="container-fluid">
-        <a class="navbar-brand d-flex align-items-center" href="{{ url_for('index') }}">
-          <img src="{{ url_for('static', filename='img/logo.png') }}" alt="Novoprint" class="logo me-2">
-          <span class="fw-bold brand-text">Novoprint</span>
-        </a>
-        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
-          <span class="navbar-toggler-icon"></span>
-        </button>
-        <div class="collapse navbar-collapse" id="navbarNav">
-          <ul class="navbar-nav ms-auto">
-            <li class="nav-item">
-              <a class="nav-link {% if request.endpoint == 'index' %}active{% endif %}" href="{{ url_for('index') }}">🏠 Dashboard</a>
-            </li>
-            <li class="nav-item">
-              <a class="nav-link {% if request.endpoint == 'clients' %}active{% endif %}" href="{{ url_for('clients') }}">👥 Clients</a>
-            </li>
-            <li class="nav-item">
-              <a class="nav-link {% if request.endpoint == 'orders' %}active{% endif %}" href="{{ url_for('orders') }}">📦 Commandes</a>
-            </li>
-            <li class="nav-item">
-              <a class="nav-link {% if request.endpoint == 'delivery' %}active{% endif %}" href="{{ url_for('delivery') }}">🚚 Livraisons</a>
-            </li>
-          </ul>
-        </div>
-      </div>
-    </nav>
+<nav class="navbar navbar-expand-lg navbar-light bg-light sticky-top shadow-sm">
+  <div class="container-fluid">
+    <a class="navbar-brand d-flex align-items-center" href="{{ url_for('index') }}">
+      <img src="{{ url_for('static', filename='img/logo.png') }}" alt="Logo" class="logo me-2">
+      <span class="brand-text fw-bold">Novoprint</span>
+    </a>
+    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+    <div class="collapse navbar-collapse" id="navbarNav">
+      <ul class="navbar-nav ms-auto">
+        <li class="nav-item">
+          <a class="nav-link {% if request.endpoint == 'index' %}active{% endif %}" href="{{ url_for('index') }}">🏠 Dashboard</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link {% if request.endpoint == 'clients' %}active{% endif %}" href="{{ url_for('clients') }}">👥 Clients</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link {% if request.endpoint == 'orders' %}active{% endif %}" href="{{ url_for('orders') }}">📦 Commandes</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link {% if request.endpoint == 'delivery' %}active{% endif %}" href="{{ url_for('delivery') }}">🚚 Livraisons</a>
+        </li>
+      </ul>
+    </div>
+  </div>
+</nav>
+
 
     <!-- Contenu principal -->
     <div class="container mt-4">
