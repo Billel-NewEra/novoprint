@@ -19,6 +19,10 @@ def index():
 
     total_clients = conn.execute("SELECT COUNT(*) FROM client").fetchone()[0]
     total_orders = conn.execute("SELECT COUNT(*) FROM orders").fetchone()[0]
+    orders_livree = conn.execute("SELECT COUNT(*) FROM orders WHERE situation = 'LIVREE'").fetchone()[0]
+    orders_encours = conn.execute("SELECT COUNT(*) FROM orders WHERE situation = 'EN COURS'").fetchone()[0]
+    orders_livraison = conn.execute("SELECT COUNT(*) FROM orders WHERE situation = 'LIVRAISON'").fetchone()[0]
+
     total_delivery = conn.execute("SELECT COUNT(*) FROM delivery").fetchone()[0]
 
     conn.close()
@@ -27,7 +31,10 @@ def index():
         "index.html",
         total_clients=total_clients,
         total_orders=total_orders,
-        total_delivery=total_delivery
+        total_delivery=total_delivery,
+        orders_livree=orders_livree,
+        orders_encours=orders_encours,
+        orders_livraison=orders_livraison
     )
 
 
