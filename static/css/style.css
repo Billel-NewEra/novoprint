@@ -1,0 +1,52 @@
+/* Style général */
+body {
+  background: linear-gradient(135deg, #f8f9fb 0%, #eaf3ff 100%); /* dégradé gris clair -> bleu clair */
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  color: #333;
+  min-height: 100vh;
+}
+
+/* Logo navbar */
+.logo {
+  max-height: 75px; /* agrandi */
+}
+
+/* Navbar claire moderne */
+.navbar {
+  background-color: #ffffff !important;
+  border-bottom: 2px solid #e0e0e0;
+  padding: 0.7rem 1rem;
+}
+
+.navbar .brand-text {
+  font-size: 1.5rem; /* texte plus grand */
+  color: #2a73d9;
+}
+
+.nav-link {
+  color: #333 !important;
+  transition: color 0.2s ease-in-out;
+  font-size: 1rem;
+}
+
+.nav-link:hover {
+  color: #2a73d9 !important;
+}
+
+.nav-link.active {
+  color: #2a73d9 !important;
+  font-weight: bold;
+  border-bottom: 2px solid #2a73d9;
+}
+
+/* Cartes / tableaux */
+.card {
+  border-radius: 8px;
+  box-shadow: 0px 2px 6px rgba(0,0,0,0.1);
+}
+
+.table {
+  background: white;
+  border-radius: 6px;
+  overflow: hidden;
+}
