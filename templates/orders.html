@@ -37,7 +37,7 @@
             <th>Date</th>
             <th>Situation</th>
             <th>Reste</th>
-            <th>Actions</th>
+            <th></th>
           </tr>
         </thead>
         <tbody>
@@ -53,7 +53,7 @@
             <td>{{ o.reste }}</td>
             <td>
               <a href="{{ url_for('order_delivery', order_id=o.num_reservation) }}" 
-                 class="btn btn-sm btn-outline-warning">
+                 class="btn btn-sm btn-delivery ">
                 🚚 Voir livraisons
               </a>
             </td>

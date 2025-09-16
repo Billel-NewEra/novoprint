@@ -6,38 +6,40 @@
 
 <div class="row g-4">
 
-  <!-- Clients -->
-  <div class="col-md-4">
-    <div class="card text-center shadow-sm border-success">
-      <div class="card-body">
-        <h5 class="card-title text-success">👥 Clients</h5>
-        <p class="display-6 fw-bold">{{ total_clients }}</p>
-        <a href="{{ url_for('clients') }}" class="btn btn-outline-success btn-sm">Voir les clients</a>
-      </div>
+<!-- Clients --> 
+<div class="col-md-4">
+  <div class="card text-center shadow-sm border-client">
+    <div class="card-body">
+      <h5 class="card-title text-client">👥 Clients</h5>
+      <p class="display-6 fw-bold">{{ total_clients }}</p>
+      <a href="{{ url_for('clients') }}" class="btn btn-client btn-sm">Voir les clients</a>
     </div>
   </div>
+</div>
 
-  <!-- Commandes -->
-  <div class="col-md-4">
-    <div class="card text-center shadow-sm border-primary">
-      <div class="card-body">
-        <h5 class="card-title text-primary">📦 Commandes</h5>
-        <p class="display-6 fw-bold">{{ total_orders }}</p>
-        <a href="{{ url_for('orders') }}" class="btn btn-outline-primary btn-sm">Voir les commandes</a>
-      </div>
-    </div>
-  </div>
 
-  <!-- Livraisons -->
-  <div class="col-md-4">
-    <div class="card text-center shadow-sm border-warning">
-      <div class="card-body">
-        <h5 class="card-title text-warning">🚚 Livraisons</h5>
-        <p class="display-6 fw-bold">{{ total_delivery }}</p>
-        <a href="{{ url_for('delivery') }}" class="btn btn-outline-warning btn-sm">Voir les livraisons</a>
-      </div>
+
+ <!-- Commandes -->
+<div class="col-md-4">
+  <div class="card text-center shadow-sm border-info">
+    <div class="card-body">
+      <h5 class="card-title text-info">📦 Commandes</h5>
+      <p class="display-6 fw-bold">{{ total_orders }}</p>
+      <a href="{{ url_for('orders') }}" class="btn btn-order btn-sm">Voir les commandes</a>
     </div>
   </div>
+</div>
+
+<!-- Livraisons -->
+<div class="col-md-4">
+  <div class="card text-center shadow-sm border-success">
+    <div class="card-body">
+      <h5 class="card-title text-success">🚚 Livraisons</h5>
+      <p class="display-6 fw-bold">{{ total_delivery }}</p>
+      <a href="{{ url_for('delivery') }}" class="btn btn-delivery btn-sm">Voir les livraisons</a>
+    </div>
+  </div>
+</div>
 
 </div>
 

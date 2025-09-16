@@ -16,7 +16,7 @@
             <th>Contact</th>
             <th>Tel</th>
             <th>Email</th>
-            <th>Actions</th>
+            <th></th>
           </tr>
         </thead>
         <tbody>
@@ -28,10 +28,10 @@
             <td>{{ c.phone }}</td>
             <td>{{ c.email }}</td>
             <td>
-              <a href="{{ url_for('client_orders', client_id=c.id) }}" class="btn btn-sm btn-outline-primary">
+              <a href="{{ url_for('client_orders', client_id=c.id) }}" class="btn btn-sm btn-order">
                 📦 Voir commandes
               </a>
-              <a href="{{ url_for('client_delivery', client_id=c.id) }}" class="btn btn-sm btn-outline-warning ms-1">
+              <a href="{{ url_for('client_delivery', client_id=c.id) }}" class="btn btn-sm btn-delivery ms-1">
                 🚚 Voir livraisons
               </a>
             </td>

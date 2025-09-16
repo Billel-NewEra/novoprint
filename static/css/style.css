@@ -52,3 +52,45 @@ body {
   border-radius: 6px;
   overflow: hidden;
 }
+
+/* Clients = Orange */
+.btn-client {
+  background-color: #ff9e1e; 
+  color: white;
+  border: none;
+}
+.btn-client:hover {
+  background-color: #e68a00;
+  color: white;
+}
+
+/* Orange foncé personnalisé */
+.text-client {
+  color: #e68a00 !important;
+}
+.border-client {
+  border-color: #e68a00 !important;
+}
+
+
+/* Commandes = Bleu */
+.btn-order {
+  background-color: #00c3ff; 
+  color: white;
+  border: none;
+}
+.btn-order:hover {
+  background-color: #0099cc;
+  color: white;
+}
+
+/* Livraisons = Vert */
+.btn-delivery {
+  background-color: #4CAF50; 
+  color: white;
+  border: none;
+}
+.btn-delivery:hover {
+  background-color: #3e8e41;
+  color: white;
+}
