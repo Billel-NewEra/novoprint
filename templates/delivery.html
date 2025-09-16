@@ -4,9 +4,11 @@
 
 <h2 class="mb-4">🚚 Liste des Livraisons</h2>
 
-<!-- Filtre période -->
+<!-- Filtres -->
 <form method="get" action="{{ url_for('delivery') }}" class="mb-3">
   <div class="row g-2 align-items-center">
+
+    <!-- Filtre période -->
     <div class="col-auto">
       <label for="period" class="form-label fw-bold">Filtrer par :</label>
     </div>
@@ -19,6 +21,22 @@
         <option value="month" {% if period == 'month' %}selected{% endif %}>Mois en cours</option>
         <option value="year" {% if period == 'year' %}selected{% endif %}>Année en cours</option>
       </select>
+    </div>
+
+    <!-- Filtre client -->
+    <div class="col-auto">
+      <input type="text" name="client" value="{{ client }}" class="form-control"
+             placeholder="🔎 Client" onkeydown="if(event.key==='Enter'){this.form.submit();}">
+    </div>
+
+    <!-- Filtre produit -->
+    <div class="col-auto">
+      <input type="text" name="product" value="{{ product }}" class="form-control"
+             placeholder="🔎 Produit" onkeydown="if(event.key==='Enter'){this.form.submit();}">
+    </div>
+
+    <div class="col-auto">
+      <button type="submit" class="btn btn-primary">Filtrer</button>
     </div>
   </div>
 </form>
@@ -37,6 +55,7 @@
             <th>Réservation</th>
             <th>Utilisateur</th>
             <th>Date livraison</th>
+            <th>Facture</th>
             <th>Observation</th>
           </tr>
         </thead>
@@ -51,6 +70,7 @@
             <td>{{ d.num_reservation }}</td>
             <td>{{ d.utilisateur }}</td>
             <td>{{ d.date_livraison }}</td>
+            <td>{{ d.facture }}</td>
             <td>{{ d.observation }}</td>
           </tr>
           {% endfor %}
@@ -63,48 +83,64 @@
     </p>
 
     <!-- Pagination -->
-    <nav>
-      <ul class="pagination justify-content-center">
-        {% if page > 1 %}
-        <li class="page-item">
-          <a class="page-link" href="{{ url_for('delivery', page=page-1, period=period) }}">Précédent</a>
-        </li>
-        {% endif %}
+<nav>
+  <ul class="pagination justify-content-center">
+    {% if page > 1 %}
+    <li class="page-item">
+      <a class="page-link"
+         href="{{ url_for('delivery', page=page-1, period=period, client=client, product=product) }}">
+        Précédent
+      </a>
+    </li>
+    {% endif %}
 
-        {% set start_page = 1 if page - 2 < 1 else page - 2 %}
-        {% set end_page = total_pages if page + 2 > total_pages else page + 2 %}
+    {% set start_page = 1 if page - 2 < 1 else page - 2 %}
+    {% set end_page = total_pages if page + 2 > total_pages else page + 2 %}
 
-        {% if start_page > 1 %}
-          <li class="page-item">
-            <a class="page-link" href="{{ url_for('delivery', page=1, period=period) }}">1</a>
-          </li>
-          {% if start_page > 2 %}
-            <li class="page-item disabled"><span class="page-link">…</span></li>
-          {% endif %}
-        {% endif %}
+    {% if start_page > 1 %}
+      <li class="page-item">
+        <a class="page-link"
+           href="{{ url_for('delivery', page=1, period=period, client=client, product=product) }}">
+          1
+        </a>
+      </li>
+      {% if start_page > 2 %}
+        <li class="page-item disabled"><span class="page-link">…</span></li>
+      {% endif %}
+    {% endif %}
 
-        {% for p in range(start_page, end_page + 1) %}
-          <li class="page-item {% if p == page %}active{% endif %}">
-            <a class="page-link" href="{{ url_for('delivery', page=p, period=period) }}">{{ p }}</a>
-          </li>
-        {% endfor %}
+    {% for p in range(start_page, end_page + 1) %}
+      <li class="page-item {% if p == page %}active{% endif %}">
+        <a class="page-link"
+           href="{{ url_for('delivery', page=p, period=period, client=client, product=product) }}">
+          {{ p }}
+        </a>
+      </li>
+    {% endfor %}
 
-        {% if end_page < total_pages %}
-          {% if end_page < total_pages - 1 %}
-            <li class="page-item disabled"><span class="page-link">…</span></li>
-          {% endif %}
-          <li class="page-item">
-            <a class="page-link" href="{{ url_for('delivery', page=total_pages, period=period) }}">{{ total_pages }}</a>
-          </li>
-        {% endif %}
+    {% if end_page < total_pages %}
+      {% if end_page < total_pages - 1 %}
+        <li class="page-item disabled"><span class="page-link">…</span></li>
+      {% endif %}
+      <li class="page-item">
+        <a class="page-link"
+           href="{{ url_for('delivery', page=total_pages, period=period, client=client, product=product) }}">
+          {{ total_pages }}
+        </a>
+      </li>
+    {% endif %}
 
-        {% if page < total_pages %}
-        <li class="page-item">
-          <a class="page-link" href="{{ url_for('delivery', page=page+1, period=period) }}">Suivant</a>
-        </li>
-        {% endif %}
-      </ul>
-    </nav>
+    {% if page < total_pages %}
+    <li class="page-item">
+      <a class="page-link"
+         href="{{ url_for('delivery', page=page+1, period=period, client=client, product=product) }}">
+        Suivant
+      </a>
+    </li>
+    {% endif %}
+  </ul>
+</nav>
+
   </div>
 </div>
 

@@ -76,7 +76,7 @@ def clients():
     )
 
 
-# ---- Orders (pagination + filtre) ----
+# ---- Orders (pagination + filtres) ----
 @app.route("/orders")
 def orders():
     conn = get_db_connection()
@@ -84,6 +84,9 @@ def orders():
     page = request.args.get("page", 1, type=int)
     per_page = 10
     period = request.args.get("period", "all")
+    status = request.args.get("status", "all")
+    client = request.args.get("client", "").strip()
+    product = request.args.get("product", "").strip()
 
     query = """
         SELECT 
@@ -96,6 +99,8 @@ def orders():
     params, count_params = [], []
 
     today = datetime.today().date()
+
+    # --- Filtre période ---
     if period == "today":
         query += " AND date(date_reservation) = ?"
         count_query += " AND date(date_reservation) = ?"
@@ -126,6 +131,32 @@ def orders():
         params.append(start)
         count_params.append(start)
 
+    # --- Filtre statut ---
+    if status != "all":
+        query += " AND situation = ?"
+        count_query += " AND situation = ?"
+        params.append(status)
+        count_params.append(status)
+
+    # --- Filtre client ---
+    if client:
+        tokens = [t for t in client.split() if t]
+        pattern = "%" + "%".join(tokens) + "%"
+        query += " AND client LIKE ? COLLATE NOCASE"
+        count_query += " AND client LIKE ? COLLATE NOCASE"
+        params.append(pattern)
+        count_params.append(pattern)
+
+    # --- Filtre produit ---
+    if product:
+        # tolère les doubles espaces, tabulations, espaces insécables, etc.
+        tokens = [t for t in product.split() if t]  # split sur tout espace
+        pattern = "%" + "%".join(tokens) + "%"
+        query += " AND produit LIKE ? COLLATE NOCASE"
+        count_query += " AND produit LIKE ? COLLATE NOCASE"
+        params.append(pattern)
+        count_params.append(pattern)
+
     query += " ORDER BY num_reservation ASC LIMIT ? OFFSET ?"
     params.extend([per_page, (page - 1) * per_page])
 
@@ -145,8 +176,12 @@ def orders():
         start=start,
         end=end,
         total_orders=total_orders,
-        period=period
+        period=period,
+        status=status,
+        client=client,
+        product=product
     )
+
 
 
 
@@ -201,7 +236,7 @@ def client_orders(client_id):
     )
 
 
-# ---- Delivery (pagination + filtre) ----
+# ---- Delivery (pagination + filtres) ----
 @app.route("/delivery")
 def delivery():
     conn = get_db_connection()
@@ -209,6 +244,8 @@ def delivery():
     page = request.args.get("page", 1, type=int)
     per_page = 10
     period = request.args.get("period", "all")
+    client = request.args.get("client", "").strip()
+    product = request.args.get("product", "").strip()
 
     query = """
         SELECT 
@@ -218,34 +255,66 @@ def delivery():
         FROM delivery
         WHERE 1=1
     """
-    params = []
+    count_query = "SELECT COUNT(*) FROM delivery WHERE 1=1"
+    params, count_params = [], []
 
     today = datetime.today().date()
+
+    # --- Filtre période ---
     if period == "today":
         query += " AND date(date_livraison) = ?"
+        count_query += " AND date(date_livraison) = ?"
         params.append(today)
+        count_params.append(today)
     elif period == "yesterday":
+        y = today - timedelta(days=1)
         query += " AND date(date_livraison) = ?"
-        params.append(today - timedelta(days=1))
+        count_query += " AND date(date_livraison) = ?"
+        params.append(y)
+        count_params.append(y)
     elif period == "week":
         start = today - timedelta(days=today.weekday())
         query += " AND date(date_livraison) >= ?"
+        count_query += " AND date(date_livraison) >= ?"
         params.append(start)
+        count_params.append(start)
     elif period == "month":
         start = today.replace(day=1)
         query += " AND date(date_livraison) >= ?"
+        count_query += " AND date(date_livraison) >= ?"
         params.append(start)
+        count_params.append(start)
     elif period == "year":
         start = today.replace(month=1, day=1)
         query += " AND date(date_livraison) >= ?"
+        count_query += " AND date(date_livraison) >= ?"
         params.append(start)
+        count_params.append(start)
 
+    # --- Filtre client ---
+    if client:
+        tokens = [t for t in client.split() if t]
+        pattern = "%" + "%".join(tokens) + "%"
+        query += " AND client LIKE ? COLLATE NOCASE"
+        count_query += " AND client LIKE ? COLLATE NOCASE"
+        params.append(pattern)
+        count_params.append(pattern)
+
+    # --- Filtre produit ---
+    if product:
+        tokens = [t for t in product.split() if t]
+        pattern = "%" + "%".join(tokens) + "%"
+        query += " AND produit LIKE ? COLLATE NOCASE"
+        count_query += " AND produit LIKE ? COLLATE NOCASE"
+        params.append(pattern)
+        count_params.append(pattern)
+
+    # --- Pagination ---
     query += " ORDER BY nl ASC LIMIT ? OFFSET ?"
     params.extend([per_page, (page - 1) * per_page])
 
     delivery_list = conn.execute(query, params).fetchall()
-
-    total_delivery = conn.execute("SELECT COUNT(*) FROM delivery").fetchone()[0]
+    total_delivery = conn.execute(count_query, count_params).fetchone()[0]
     total_pages = (total_delivery + per_page - 1) // per_page
 
     start = (page - 1) * per_page + 1 if total_delivery > 0 else 0
@@ -261,7 +330,9 @@ def delivery():
         start=start,
         end=end,
         total_delivery=total_delivery,
-        period=period
+        period=period,
+        client=client,
+        product=product
     )
 
 
