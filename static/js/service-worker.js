@@ -3,8 +3,8 @@ const urlsToCache = [
   "/novoprint/",
   "/novoprint/static/css/style.css",
   "/novoprint/static/js/app.js",
-  "/novoprint/static/icons/novoprint_icon_192x192.png",
-  "/novoprint/static/icons/novoprint_icon_512x512.png"
+  "/novoprint/static/icons/novoprint_icon_192.png",
+  "/novoprint/static/icons/novoprint_icon_512.png"
 ];
 
 // Install SW
