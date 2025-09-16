@@ -51,6 +51,7 @@ def sync(access_path, sqlite_path):
             client TEXT,               -- Client
             produit TEXT,              -- Produit
             qte INTEGER,               -- Cmnde
+            date_reservation TXT,      -- Date
             situation TEXT,            -- Situation
             reste REAL                 -- Reste
         )
@@ -63,6 +64,7 @@ def sync(access_path, sqlite_path):
             CLIENT.ENTREPRISE,
             MAQUETTE.DESCRIPTION,
             RESERVATION_TABLE.QTE,
+            RESERVATION.DATE_RESERVATION,
             RESERVATION.SITUATION,
             RESERVATION_TABLE.QTE - IIF(ISNULL(Total_livre_cmd.QT),0,Total_livre_cmd.QT) AS Reste
         FROM 
@@ -87,7 +89,7 @@ def sync(access_path, sqlite_path):
             ON RESERVATION.NUM_RESERVATION = RESERVATION_TABLE.NUM_RESERVATION
     """)
     for row in rows:
-        cur_sql.execute("INSERT INTO orders VALUES (?,?,?,?,?,?,?)", row)
+        cur_sql.execute("INSERT INTO orders VALUES (?,?,?,?,?,?,?,?)", row)
 
     # ==============================
     # TABLE matérialisée "delivery"

@@ -1,8 +1,27 @@
 {% extends "base.html" %}
-{% block title %}Delivery{% endblock %}
+{% block title %}Livraisons{% endblock %}
 {% block content %}
 
 <h2 class="mb-4">🚚 Liste des Livraisons</h2>
+
+<!-- Filtre période -->
+<form method="get" action="{{ url_for('delivery') }}" class="mb-3">
+  <div class="row g-2 align-items-center">
+    <div class="col-auto">
+      <label for="period" class="form-label fw-bold">Filtrer par :</label>
+    </div>
+    <div class="col-auto">
+      <select id="period" name="period" class="form-select" onchange="this.form.submit()">
+        <option value="all" {% if period == 'all' %}selected{% endif %}>Toutes</option>
+        <option value="today" {% if period == 'today' %}selected{% endif %}>Aujourd'hui</option>
+        <option value="yesterday" {% if period == 'yesterday' %}selected{% endif %}>Hier</option>
+        <option value="week" {% if period == 'week' %}selected{% endif %}>Semaine en cours</option>
+        <option value="month" {% if period == 'month' %}selected{% endif %}>Mois en cours</option>
+        <option value="year" {% if period == 'year' %}selected{% endif %}>Année en cours</option>
+      </select>
+    </div>
+  </div>
+</form>
 
 <div class="card shadow-sm">
   <div class="card-body">
@@ -46,22 +65,20 @@
     </p>
 
     <!-- Pagination -->
-    <nav aria-label="Page navigation">
+    <nav>
       <ul class="pagination justify-content-center">
-
         {% if page > 1 %}
-          <li class="page-item">
-            <a class="page-link" href="{{ url_for('delivery', page=page-1) }}">Précédent</a>
-          </li>
+        <li class="page-item">
+          <a class="page-link" href="{{ url_for('delivery', page=page-1, period=period) }}">Précédent</a>
+        </li>
         {% endif %}
 
-        {# Calcul des bornes d’affichage #}
         {% set start_page = 1 if page - 2 < 1 else page - 2 %}
         {% set end_page = total_pages if page + 2 > total_pages else page + 2 %}
 
         {% if start_page > 1 %}
           <li class="page-item">
-            <a class="page-link" href="{{ url_for('delivery', page=1) }}">1</a>
+            <a class="page-link" href="{{ url_for('delivery', page=1, period=period) }}">1</a>
           </li>
           {% if start_page > 2 %}
             <li class="page-item disabled"><span class="page-link">…</span></li>
@@ -70,7 +87,7 @@
 
         {% for p in range(start_page, end_page + 1) %}
           <li class="page-item {% if p == page %}active{% endif %}">
-            <a class="page-link" href="{{ url_for('delivery', page=p) }}">{{ p }}</a>
+            <a class="page-link" href="{{ url_for('delivery', page=p, period=period) }}">{{ p }}</a>
           </li>
         {% endfor %}
 
@@ -79,16 +96,15 @@
             <li class="page-item disabled"><span class="page-link">…</span></li>
           {% endif %}
           <li class="page-item">
-            <a class="page-link" href="{{ url_for('delivery', page=total_pages) }}">{{ total_pages }}</a>
+            <a class="page-link" href="{{ url_for('delivery', page=total_pages, period=period) }}">{{ total_pages }}</a>
           </li>
         {% endif %}
 
         {% if page < total_pages %}
-          <li class="page-item">
-            <a class="page-link" href="{{ url_for('delivery', page=page+1) }}">Suivant</a>
-          </li>
+        <li class="page-item">
+          <a class="page-link" href="{{ url_for('delivery', page=page+1, period=period) }}">Suivant</a>
+        </li>
         {% endif %}
-
       </ul>
     </nav>
   </div>

@@ -1,5 +1,6 @@
 from flask import Flask, render_template, request
 import sqlite3
+from datetime import datetime, timedelta
 
 app = Flask(__name__)
 app.secret_key = "change_this_to_a_real_secret_key"
@@ -68,34 +69,67 @@ def clients():
     )
 
 
-# ---- Orders (pagination) ----
+# ---- Orders (pagination + filtre) ----
 @app.route("/orders")
 def orders():
     conn = get_db_connection()
 
     page = request.args.get("page", 1, type=int)
     per_page = 10
+    period = request.args.get("period", "all")
 
-    orders_list = conn.execute(
-        """
+    query = """
         SELECT 
             num_reservation, cmdl, client, produit, qte,
-            situation, reste
+            date_reservation, situation, reste
         FROM orders
-        ORDER BY num_reservation ASC
-        LIMIT ? OFFSET ?
-        """,
-        (per_page, (page - 1) * per_page),
-    ).fetchall()
+        WHERE 1=1
+    """
+    count_query = "SELECT COUNT(*) FROM orders WHERE 1=1"
+    params, count_params = [], []
 
-    total_orders = conn.execute("SELECT COUNT(*) FROM orders").fetchone()[0]
+    today = datetime.today().date()
+    if period == "today":
+        query += " AND date(date_reservation) = ?"
+        count_query += " AND date(date_reservation) = ?"
+        params.append(today)
+        count_params.append(today)
+    elif period == "yesterday":
+        y = today - timedelta(days=1)
+        query += " AND date(date_reservation) = ?"
+        count_query += " AND date(date_reservation) = ?"
+        params.append(y)
+        count_params.append(y)
+    elif period == "week":
+        start = today - timedelta(days=today.weekday())
+        query += " AND date(date_reservation) >= ?"
+        count_query += " AND date(date_reservation) >= ?"
+        params.append(start)
+        count_params.append(start)
+    elif period == "month":
+        start = today.replace(day=1)
+        query += " AND date(date_reservation) >= ?"
+        count_query += " AND date(date_reservation) >= ?"
+        params.append(start)
+        count_params.append(start)
+    elif period == "year":
+        start = today.replace(month=1, day=1)
+        query += " AND date(date_reservation) >= ?"
+        count_query += " AND date(date_reservation) >= ?"
+        params.append(start)
+        count_params.append(start)
+
+    query += " ORDER BY num_reservation ASC LIMIT ? OFFSET ?"
+    params.extend([per_page, (page - 1) * per_page])
+
+    orders_list = conn.execute(query, params).fetchall()
+    total_orders = conn.execute(count_query, count_params).fetchone()[0]
     total_pages = (total_orders + per_page - 1) // per_page
 
     start = (page - 1) * per_page + 1 if total_orders > 0 else 0
     end = min(page * per_page, total_orders)
 
     conn.close()
-
     return render_template(
         "orders.html",
         orders=orders_list,
@@ -103,11 +137,13 @@ def orders():
         total_pages=total_pages,
         start=start,
         end=end,
-        total_orders=total_orders
+        total_orders=total_orders,
+        period=period
     )
 
 
-# ---- Orders by client (pagination) ----
+
+# ---- Orders by client (pas de filtre ici) ----
 @app.route("/clients/<int:client_id>/orders")
 def client_orders(client_id):
     conn = get_db_connection()
@@ -127,7 +163,7 @@ def client_orders(client_id):
         """
         SELECT 
             num_reservation, cmdl, client, produit, qte,
-            situation, reste
+            date_reservation, situation, reste
         FROM orders
         WHERE client = ?
         ORDER BY num_reservation ASC
@@ -158,26 +194,49 @@ def client_orders(client_id):
     )
 
 
-# ---- Delivery (pagination) ----
+# ---- Delivery (pagination + filtre) ----
 @app.route("/delivery")
 def delivery():
     conn = get_db_connection()
 
     page = request.args.get("page", 1, type=int)
     per_page = 10
+    period = request.args.get("period", "all")
 
-    delivery_list = conn.execute(
-        """
+    query = """
         SELECT 
             nl, code_client, client, qte, montant, num_reservation,
             utilisateur, date_livraison, facture, num_livraison,
             observation, produit
         FROM delivery
-        ORDER BY nl ASC
-        LIMIT ? OFFSET ?
-        """,
-        (per_page, (page - 1) * per_page),
-    ).fetchall()
+        WHERE 1=1
+    """
+    params = []
+
+    today = datetime.today().date()
+    if period == "today":
+        query += " AND date(date_livraison) = ?"
+        params.append(today)
+    elif period == "yesterday":
+        query += " AND date(date_livraison) = ?"
+        params.append(today - timedelta(days=1))
+    elif period == "week":
+        start = today - timedelta(days=today.weekday())
+        query += " AND date(date_livraison) >= ?"
+        params.append(start)
+    elif period == "month":
+        start = today.replace(day=1)
+        query += " AND date(date_livraison) >= ?"
+        params.append(start)
+    elif period == "year":
+        start = today.replace(month=1, day=1)
+        query += " AND date(date_livraison) >= ?"
+        params.append(start)
+
+    query += " ORDER BY nl ASC LIMIT ? OFFSET ?"
+    params.extend([per_page, (page - 1) * per_page])
+
+    delivery_list = conn.execute(query, params).fetchall()
 
     total_delivery = conn.execute("SELECT COUNT(*) FROM delivery").fetchone()[0]
     total_pages = (total_delivery + per_page - 1) // per_page
@@ -194,11 +253,12 @@ def delivery():
         total_pages=total_pages,
         start=start,
         end=end,
-        total_delivery=total_delivery
+        total_delivery=total_delivery,
+        period=period
     )
 
 
-# ---- Delivery by client (pagination) ----
+# ---- Delivery by client (pas de filtre ici) ----
 @app.route("/clients/<int:client_id>/delivery")
 def client_delivery(client_id):
     conn = get_db_connection()
@@ -257,7 +317,7 @@ def order_delivery(order_id):
 
     page = request.args.get("page", 1, type=int)
     per_page = 10
-    from_client = request.args.get("from_client")  # <-- param facultatif
+    from_client = request.args.get("from_client")
 
     delivery_list = conn.execute(
         """
@@ -293,7 +353,7 @@ def order_delivery(order_id):
         start=start,
         end=end,
         total_delivery=total_delivery,
-        from_client=from_client  # <-- transmis au template
+        from_client=from_client
     )
 
 

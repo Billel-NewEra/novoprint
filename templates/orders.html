@@ -4,89 +4,113 @@
 
 <h2 class="mb-4">📦 Liste des Commandes</h2>
 
-<table class="table table-striped align-middle">
-  <thead class="table-dark">
-    <tr>
-      <th>N° Cmd</th>
-      <th>CMDCL</th>
-      <th>Client</th>
-      <th>Produit</th>
-      <th>Quantité</th>
-      <th>Situation</th>
-      <th>Reste</th>
-      <th>Actions</th>
-    </tr>
-  </thead>
-  <tbody>
-    {% for o in orders %}
-    <tr>
-      <td>{{ o.num_reservation }}</td>
-      <td>{{ o.cmdl }}</td>
-      <td>{{ o.client }}</td>
-      <td>{{ o.produit }}</td>
-      <td>{{ o.qte }}</td>
-      <td>{{ o.situation }}</td>
-      <td>{{ o.reste }}</td>
-      <td>
-        <a href="{{ url_for('order_delivery', order_id=o.num_reservation) }}" 
-           class="btn btn-sm btn-outline-warning">
-          🚚 Voir livraisons
-        </a>
-      </td>
-    </tr>
-    {% endfor %}
-  </tbody>
-</table>
+<!-- Filtre période -->
+<form method="get" action="{{ url_for('orders') }}" class="mb-3">
+  <div class="row g-2 align-items-center">
+    <div class="col-auto">
+      <label for="period" class="form-label fw-bold">Filtrer par :</label>
+    </div>
+    <div class="col-auto">
+      <select id="period" name="period" class="form-select" onchange="this.form.submit()">
+        <option value="all" {% if period == 'all' %}selected{% endif %}>Toutes</option>
+        <option value="today" {% if period == 'today' %}selected{% endif %}>Aujourd'hui</option>
+        <option value="yesterday" {% if period == 'yesterday' %}selected{% endif %}>Hier</option>
+        <option value="week" {% if period == 'week' %}selected{% endif %}>Semaine en cours</option>
+        <option value="month" {% if period == 'month' %}selected{% endif %}>Mois en cours</option>
+        <option value="year" {% if period == 'year' %}selected{% endif %}>Année en cours</option>
+      </select>
+    </div>
+  </div>
+</form>
 
-<!-- Pagination -->
-<nav aria-label="Page navigation">
-  <ul class="pagination justify-content-center">
+<div class="card shadow-sm">
+  <div class="card-body">
+    <div class="table-responsive">
+      <table class="table table-striped align-middle table-bordered">
+        <thead class="table-dark">
+          <tr>
+            <th>N° Cmd</th>
+            <th>CMDCL</th>
+            <th>Client</th>
+            <th>Produit</th>
+            <th>Quantité</th>
+            <th>Date</th>
+            <th>Situation</th>
+            <th>Reste</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for o in orders %}
+          <tr>
+            <td>{{ o.num_reservation }}</td>
+            <td>{{ o.cmdl }}</td>
+            <td>{{ o.client }}</td>
+            <td>{{ o.produit }}</td>
+            <td>{{ o.qte }}</td>
+            <td>{{ o.date_reservation }}</td>
+            <td>{{ o.situation }}</td>
+            <td>{{ o.reste }}</td>
+            <td>
+              <a href="{{ url_for('order_delivery', order_id=o.num_reservation) }}" 
+                 class="btn btn-sm btn-outline-warning">
+                🚚 Voir livraisons
+              </a>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
 
-    {% if page > 1 %}
-      <li class="page-item">
-        <a class="page-link" href="{{ url_for('orders', page=page-1) }}">Précédent</a>
-      </li>
-    {% endif %}
+    <p class="text-muted mt-2 text-center">
+      Affichage {{ start }} – {{ end }} sur {{ total_orders }} commandes
+    </p>
 
-    {# Calcul des bornes d’affichage #}
-    {% set start_page = 1 if page - 2 < 1 else page - 2 %}
-    {% set end_page = total_pages if page + 2 > total_pages else page + 2 %}
+    <!-- Pagination -->
+    <nav>
+      <ul class="pagination justify-content-center">
+        {% if page > 1 %}
+        <li class="page-item">
+          <a class="page-link" href="{{ url_for('orders', page=page-1, period=period) }}">Précédent</a>
+        </li>
+        {% endif %}
 
-    {% if start_page > 1 %}
-      <li class="page-item">
-        <a class="page-link" href="{{ url_for('orders', page=1) }}">1</a>
-      </li>
-      {% if start_page > 2 %}
-        <li class="page-item disabled"><span class="page-link">…</span></li>
-      {% endif %}
-    {% endif %}
+        {% set start_page = 1 if page - 2 < 1 else page - 2 %}
+        {% set end_page = total_pages if page + 2 > total_pages else page + 2 %}
 
-    {% for p in range(start_page, end_page + 1) %}
-      <li class="page-item {% if p == page %}active{% endif %}">
-        <a class="page-link" href="{{ url_for('orders', page=p) }}">{{ p }}</a>
-      </li>
-    {% endfor %}
+        {% if start_page > 1 %}
+          <li class="page-item">
+            <a class="page-link" href="{{ url_for('orders', page=1, period=period) }}">1</a>
+          </li>
+          {% if start_page > 2 %}
+            <li class="page-item disabled"><span class="page-link">…</span></li>
+          {% endif %}
+        {% endif %}
 
-    {% if end_page < total_pages %}
-      {% if end_page < total_pages - 1 %}
-        <li class="page-item disabled"><span class="page-link">…</span></li>
-      {% endif %}
-      <li class="page-item">
-        <a class="page-link" href="{{ url_for('orders', page=total_pages) }}">{{ total_pages }}</a>
-      </li>
-    {% endif %}
+        {% for p in range(start_page, end_page + 1) %}
+          <li class="page-item {% if p == page %}active{% endif %}">
+            <a class="page-link" href="{{ url_for('orders', page=p, period=period) }}">{{ p }}</a>
+          </li>
+        {% endfor %}
 
-    {% if page < total_pages %}
-      <li class="page-item">
-        <a class="page-link" href="{{ url_for('orders', page=page+1) }}">Suivant</a>
-      </li>
-    {% endif %}
+        {% if end_page < total_pages %}
+          {% if end_page < total_pages - 1 %}
+            <li class="page-item disabled"><span class="page-link">…</span></li>
+          {% endif %}
+          <li class="page-item">
+            <a class="page-link" href="{{ url_for('orders', page=total_pages, period=period) }}">{{ total_pages }}</a>
+          </li>
+        {% endif %}
 
-  </ul>
-</nav>
-
-<p class="text-muted text-center">
-  Affichage {{ start }} – {{ end }} sur {{ total_orders }} résultats
-</p>
+        {% if page < total_pages %}
+        <li class="page-item">
+          <a class="page-link" href="{{ url_for('orders', page=page+1, period=period) }}">Suivant</a>
+        </li>
+        {% endif %}
+      </ul>
+    </nav>
+  </div>
+</div>
 
 {% endblock %}
