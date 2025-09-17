@@ -1,0 +1,68 @@
+{# templates/pagination.html #}
+<nav aria-label="Navigation des pages">
+  <ul class="pagination justify-content-center">
+
+    <!-- Précédent -->
+    {% if page > 1 %}
+    <li class="page-item">
+      <a class="page-link rounded-pill text-dark"
+         href="{{ url_for(endpoint, page=page-1, **params) }}">
+        ⬅ Précédent
+      </a>
+    </li>
+    {% endif %}
+
+    {# Calcul des bornes d’affichage #}
+    {% set start_page = 1 if page - 2 < 1 else page - 2 %}
+    {% set end_page = total_pages if page + 2 > total_pages else page + 2 %}
+
+    {% if start_page > 1 %}
+      <li class="page-item">
+        <a class="page-link rounded-pill text-dark"
+           href="{{ url_for(endpoint, page=1, **params) }}">
+          1
+        </a>
+      </li>
+      {% if start_page > 2 %}
+        <li class="page-item disabled">
+          <span class="page-link border-0 bg-transparent text-secondary fw-bold">&raquo;</span>
+        </li>
+      {% endif %}
+    {% endif %}
+
+    {# Pages centrales #}
+    {% for p in range(start_page, end_page + 1) %}
+      <li class="page-item {% if p == page %}active{% endif %}">
+        <a class="page-link rounded-pill {% if p == page %}fw-bold bg-primary text-white border-primary{% else %}text-dark{% endif %}"
+           href="{{ url_for(endpoint, page=p, **params) }}">
+          {{ p }}
+        </a>
+      </li>
+    {% endfor %}
+
+    {% if end_page < total_pages %}
+      {% if end_page < total_pages - 1 %}
+        <li class="page-item disabled">
+          <span class="page-link border-0 bg-transparent text-secondary fw-bold">&raquo;</span>
+        </li>
+      {% endif %}
+      <li class="page-item">
+        <a class="page-link rounded-pill text-dark"
+           href="{{ url_for(endpoint, page=total_pages, **params) }}">
+          {{ total_pages }}
+        </a>
+      </li>
+    {% endif %}
+
+    <!-- Suivant -->
+    {% if page < total_pages %}
+    <li class="page-item">
+      <a class="page-link rounded-pill text-dark"
+         href="{{ url_for(endpoint, page=page+1, **params) }}">
+        Suivant ➡
+      </a>
+    </li>
+    {% endif %}
+
+  </ul>
+</nav>
