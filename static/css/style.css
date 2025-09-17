@@ -94,3 +94,26 @@ body {
   background-color: #3e8e41;
   color: white;
 }
+
+/* Espacement du menu utilisateur */
+.navbar .nav-item.dropdown:last-child {
+  margin-left: 1rem;
+}
+
+/* Style particulier pour Administration */
+.navbar .nav-item .nav-link.admin-link {
+  font-weight: 600;
+  color: #0d6efd;
+}
+.navbar .nav-item .nav-link.admin-link:hover {
+  color: #0a58ca;
+}
+
+/* Uniformisation hover */
+.navbar .nav-link:hover,
+.navbar .dropdown-item:hover {
+  background-color: rgba(0,123,255,0.05);
+  border-radius: 0.3rem;
+}
+
+

@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+{% block title %}Gestion des utilisateurs{% endblock %}
+{% block content %}
+
+<h2 class="mb-4">⚙️ Gestion des utilisateurs</h2>
+
+<div class="card shadow-sm">
+  <div class="card-body">
+    <div class="table-responsive">
+      <table class="table table-striped align-middle table-bordered">
+        <thead class="table-dark">
+          <tr>
+            <th>ID</th>
+            <th>Nom d'utilisateur</th>
+            <th>Rôle</th>
+            <th>Client associé</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for u in users %}
+          <tr>
+            <td>{{ u.id }}</td>
+            <td>{{ u.username }}</td>
+            <td>
+              {% if u.role == "admin" %}
+                🛡️ Admin
+              {% else %}
+                👤 Client
+              {% endif %}
+            </td>
+            <td>{{ u.client_name if u.client_name else "-" }}</td>
+            <td>
+              {% if u.role != "admin" %}
+              <form action="{{ url_for('delete_user', user_id=u.id) }}" method="post" style="display:inline;">
+                <button type="submit" class="btn btn-sm btn-danger"
+                        onclick="return confirm('Supprimer ce compte ?')">🗑️ Supprimer</button>
+              </form>
+              {% else %}
+              <span class="text-muted">Non supprimable</span>
+              {% endif %}
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<a href="{{ url_for('create_user') }}" class="btn btn-primary mt-3">➕ Créer un nouveau compte client</a>
+
+{% endblock %}

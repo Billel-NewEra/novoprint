@@ -23,15 +23,17 @@
       </div>
     </div>
 
-    <!-- Filtre client -->
-    <div class="col-md">
-      <div class="form-floating">
-        <input type="text" name="client" value="{{ client }}" class="form-control"
-               id="client" placeholder="Client"
-               onkeydown="if(event.key==='Enter'){this.form.submit();}">
-        <label for="client">🔎 Client</label>
-      </div>
-    </div>
+    <!-- Filtre client (uniquement admin) -->
+{% if current_user.role == 'admin' %}
+<div class="col-md">
+  <div class="form-floating">
+    <input type="text" name="client" value="{{ client }}" class="form-control"
+           id="client" placeholder="Client"
+           onkeydown="if(event.key==='Enter'){this.form.submit();}">
+    <label for="client">🔎 Client</label>
+  </div>
+</div>
+{% endif %}
 
     <!-- Filtre produit -->
     <div class="col-md">

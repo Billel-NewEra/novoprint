@@ -6,57 +6,64 @@
 
 <div class="row g-4">
 
-<!-- Clients --> 
-<div class="col-md-4">
-  <div class="card text-center shadow-sm border-client">
-    <div class="card-body">
-      <h5 class="card-title text-client">👥 Clients</h5>
-      <p class="display-6 fw-bold">{{ total_clients }}</p>
-      <a href="{{ url_for('clients') }}" class="btn btn-client btn-sm">Voir les clients</a>
+  <!-- Clients (admin uniquement) --> 
+  {% if current_user.role == 'admin' %}
+  <div class="col-md-4">
+    <div class="card text-center shadow-sm border-client">
+      <div class="card-body">
+        <h5 class="card-title text-client">👥 Clients</h5>
+        <p class="display-6 fw-bold">{{ total_clients }}</p>
+        <a href="{{ url_for('clients') }}" class="btn btn-client btn-sm">Voir les clients</a>
+      </div>
     </div>
   </div>
-</div>
+  {% endif %}
 
+  <!-- Commandes -->
+  <div class="col-md-4">
+    <div class="card text-center shadow-sm border-info">
+      <div class="card-body">
+        <h5 class="card-title text-info">
+          📦 {% if current_user.role == 'admin' %}Commandes{% else %}Mes commandes{% endif %}
+        </h5>
 
+        <!-- Statuts alignés -->
+        <table class="table table-borderless text-start small mb-3 w-auto mx-auto">
+          <tr class="fs-6">
+            <td class="text-success fw-bold">✅ Livrées</td>
+            <td class="fw-bold">{{ orders_livree }}</td>
+          </tr>
+          <tr class="fs-6">
+            <td class="text-primary fw-bold">🚚 Livraison</td>
+            <td class="fw-bold">{{ orders_livraison }}</td>
+          </tr>
+          <tr class="fs-6">
+            <td class="fw-bold" style="color:#ff8800;">⏳ En cours</td>
+            <td class="fw-bold">{{ orders_encours }}</td>
+          </tr>
+        </table>
 
-<!-- Commandes -->
-<div class="col-md-4">
-  <div class="card text-center shadow-sm border-info">
-    <div class="card-body">
-      <h5 class="card-title text-info">📦 Commandes</h5>
-      <!-- Statuts alignés -->
-      <table class="table table-borderless text-start small mb-3 w-auto mx-auto">
-        <tr class="fs-6">
-          <td class="text-success fw-bold">✅ Livrées</td>
-          <td class="fw-bold">{{ orders_livree }}</td>
-        </tr>
-        <tr class="fs-6">
-          <td class="text-primary fw-bold">🚚 Livraison</td>
-          <td class="fw-bold">{{ orders_livraison }}</td>
-        </tr>
-        <tr class="fs-6">
-          <td class="fw-bold" style="color:#ff8800;">⏳ En cours</td>
-          <td class="fw-bold">{{ orders_encours }}</td>
-        </tr>
-      </table>
-
-      <a href="{{ url_for('orders') }}" class="btn btn-order btn-sm">Voir les commandes</a>
+        <a href="{{ url_for('orders') }}" class="btn btn-order btn-sm">
+          {% if current_user.role == 'admin' %}Voir les commandes{% else %}Voir mes commandes{% endif %}
+        </a>
+      </div>
     </div>
   </div>
-</div>
 
-
-
-<!-- Livraisons -->
-<div class="col-md-4">
-  <div class="card text-center shadow-sm border-success">
-    <div class="card-body">
-      <h5 class="card-title text-success">🚚 Livraisons</h5>
-      <p class="display-6 fw-bold">{{ total_delivery }}</p>
-      <a href="{{ url_for('delivery') }}" class="btn btn-delivery btn-sm">Voir les livraisons</a>
+  <!-- Livraisons -->
+  <div class="col-md-4">
+    <div class="card text-center shadow-sm border-success">
+      <div class="card-body">
+        <h5 class="card-title text-success">
+          🚚 {% if current_user.role == 'admin' %}Livraisons{% else %}Mes livraisons{% endif %}
+        </h5>
+        <p class="display-6 fw-bold">{{ total_delivery }}</p>
+        <a href="{{ url_for('delivery') }}" class="btn btn-delivery btn-sm">
+          {% if current_user.role == 'admin' %}Voir les livraisons{% else %}Voir mes livraisons{% endif %}
+        </a>
+      </div>
     </div>
   </div>
-</div>
 
 </div>
 

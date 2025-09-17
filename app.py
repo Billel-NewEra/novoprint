@@ -1,9 +1,20 @@
-from flask import Flask, render_template, request
+from flask import Flask, render_template, request, redirect, url_for, flash
 import sqlite3
 from datetime import datetime, timedelta
+from flask_login import (
+    LoginManager, UserMixin, login_user, logout_user,
+    login_required, current_user
+)
+from werkzeug.security import generate_password_hash
+from werkzeug.security import check_password_hash
 
 app = Flask(__name__)
 app.secret_key = "change_this_to_a_real_secret_key"
+
+# --- Flask-Login config ---
+login_manager = LoginManager()
+login_manager.init_app(app)
+login_manager.login_view = "login"  # si accès non autorisé → /login
 
 # --- Connexion sqlite3 brut ---
 def get_db_connection():
@@ -11,19 +22,119 @@ def get_db_connection():
     conn.row_factory = sqlite3.Row
     return conn
 
+# --- User class (Flask-Login) ---
+class User(UserMixin):
+    def __init__(self, id, username, password_hash, role, client_id):
+        self.id = id
+        self.username = username
+        self.password_hash = password_hash
+        self.role = role
+        self.client_id = client_id
+
+def get_user_by_id(user_id):
+    conn = get_db_connection()
+    row = conn.execute("SELECT * FROM users WHERE id = ?", (user_id,)).fetchone()
+    conn.close()
+    if row:
+        return User(row["id"], row["username"], row["password_hash"], row["role"], row["client_id"])
+    return None
+
+def get_user_by_username(username):
+    conn = get_db_connection()
+    row = conn.execute("SELECT * FROM users WHERE username = ?", (username,)).fetchone()
+    conn.close()
+    if row:
+        return User(row["id"], row["username"], row["password_hash"], row["role"], row["client_id"])
+    return None
+
+@login_manager.user_loader
+def load_user(user_id):
+    return get_user_by_id(user_id)
+
+# ============================
+#   ROUTES AUTHENTIFICATION
+# ============================
+
+@app.route("/login", methods=["GET", "POST"])
+def login():
+    if request.method == "POST":
+        username = request.form["username"]
+        password = request.form["password"]
+        user = get_user_by_username(username)
+        if user and check_password_hash(user.password_hash, password):
+            login_user(user)
+            flash("Connexion réussie ✅", "success")
+            return redirect(url_for("index"))
+        else:
+            flash("Nom d'utilisateur ou mot de passe incorrect ❌", "danger")
+    return render_template("login.html")
+
+@app.route("/logout")
+@login_required
+def logout():
+    logout_user()
+    flash("Vous être déconnecté maintenant ✅", "info")
+    return redirect(url_for("login"))
+
+@app.route("/whoami")
+@login_required
+def whoami():
+    return f"Utilisateur connecté : {current_user.username} | rôle = {current_user.role} | client_id = {current_user.client_id}"
+
+# ============================
+#   CONTEXT PROCESSOR
+# ============================
+
+@app.context_processor
+def inject_client_name():
+    client_name = None
+    if current_user.is_authenticated and current_user.role == "client":
+        conn = get_db_connection()
+        row = conn.execute(
+            "SELECT Entreprise FROM client WHERE N = ?", (current_user.client_id,)
+        ).fetchone()
+        conn.close()
+        if row:
+            client_name = row["Entreprise"]
+    return dict(client_name=client_name)
+
+# ============================
+#   ROUTES PRINCIPALES
+# ============================
 
 # ---- Dashboard ----
 @app.route("/")
+@login_required
 def index():
     conn = get_db_connection()
 
-    total_clients = conn.execute("SELECT COUNT(*) FROM client").fetchone()[0]
-    total_orders = conn.execute("SELECT COUNT(*) FROM orders").fetchone()[0]
-    orders_livree = conn.execute("SELECT COUNT(*) FROM orders WHERE situation = 'LIVREE'").fetchone()[0]
-    orders_encours = conn.execute("SELECT COUNT(*) FROM orders WHERE situation = 'EN COURS'").fetchone()[0]
-    orders_livraison = conn.execute("SELECT COUNT(*) FROM orders WHERE situation = 'LIVRAISON'").fetchone()[0]
+    # Vue admin → totaux globaux
+    if current_user.role == "admin":
+        total_clients = conn.execute("SELECT COUNT(*) FROM client").fetchone()[0]
+        total_orders = conn.execute("SELECT COUNT(*) FROM orders").fetchone()[0]
+        orders_livree = conn.execute("SELECT COUNT(*) FROM orders WHERE situation = 'LIVREE'").fetchone()[0]
+        orders_encours = conn.execute("SELECT COUNT(*) FROM orders WHERE situation = 'EN COURS'").fetchone()[0]
+        orders_livraison = conn.execute("SELECT COUNT(*) FROM orders WHERE situation = 'LIVRAISON'").fetchone()[0]
+        total_delivery = conn.execute("SELECT COUNT(*) FROM delivery").fetchone()[0]
+    else:
+        # Vue client → totaux spécifiques à son entreprise
+        client = conn.execute("SELECT Entreprise FROM client WHERE N = ?", (current_user.client_id,)).fetchone()
+        if client:
+            client_name = client["Entreprise"]
 
-    total_delivery = conn.execute("SELECT COUNT(*) FROM delivery").fetchone()[0]
+            total_clients = 1
+            total_orders = conn.execute("SELECT COUNT(*) FROM orders WHERE client = ?", (client_name,)).fetchone()[0]
+            orders_livree = conn.execute("SELECT COUNT(*) FROM orders WHERE client = ? AND situation = 'LIVREE'", (client_name,)).fetchone()[0]
+            orders_encours = conn.execute("SELECT COUNT(*) FROM orders WHERE client = ? AND situation = 'EN COURS'", (client_name,)).fetchone()[0]
+            orders_livraison = conn.execute("SELECT COUNT(*) FROM orders WHERE client = ? AND situation = 'LIVRAISON'", (client_name,)).fetchone()[0]
+            total_delivery = conn.execute("SELECT COUNT(*) FROM delivery WHERE client = ?", (client_name,)).fetchone()[0]
+        else:
+            total_clients = 0
+            total_orders = 0
+            orders_livree = 0
+            orders_encours = 0
+            orders_livraison = 0
+            total_delivery = 0
 
     conn.close()
 
@@ -37,9 +148,9 @@ def index():
         orders_livraison=orders_livraison
     )
 
-
 # ---- Clients (pagination) ----
 @app.route("/clients")
+@login_required
 def clients():
     conn = get_db_connection()
 
@@ -75,9 +186,9 @@ def clients():
         total_clients=total_clients
     )
 
-
 # ---- Orders (pagination + filtres) ----
 @app.route("/orders")
+@login_required
 def orders():
     conn = get_db_connection()
 
@@ -100,7 +211,17 @@ def orders():
 
     today = datetime.today().date()
 
-    # --- Filtre période ---
+    # Restriction si client connecté
+    if current_user.role == "client":
+        client_name = conn.execute(
+            "SELECT Entreprise FROM client WHERE N = ?", (current_user.client_id,)
+        ).fetchone()["Entreprise"]
+        query += " AND client = ?"
+        count_query += " AND client = ?"
+        params.append(client_name)
+        count_params.append(client_name)
+
+    # Filtres...
     if period == "today":
         query += " AND date(date_reservation) = ?"
         count_query += " AND date(date_reservation) = ?"
@@ -131,15 +252,13 @@ def orders():
         params.append(start)
         count_params.append(start)
 
-    # --- Filtre statut ---
     if status != "all":
         query += " AND situation = ?"
         count_query += " AND situation = ?"
         params.append(status)
         count_params.append(status)
 
-    # --- Filtre client ---
-    if client:
+    if client and current_user.role == "admin":
         tokens = [t for t in client.split() if t]
         pattern = "%" + "%".join(tokens) + "%"
         query += " AND client LIKE ? COLLATE NOCASE"
@@ -147,17 +266,15 @@ def orders():
         params.append(pattern)
         count_params.append(pattern)
 
-    # --- Filtre produit ---
     if product:
-        # tolère les doubles espaces, tabulations, espaces insécables, etc.
-        tokens = [t for t in product.split() if t]  # split sur tout espace
+        tokens = [t for t in product.split() if t]
         pattern = "%" + "%".join(tokens) + "%"
         query += " AND produit LIKE ? COLLATE NOCASE"
         count_query += " AND produit LIKE ? COLLATE NOCASE"
         params.append(pattern)
         count_params.append(pattern)
 
-    query += " ORDER BY num_reservation ASC LIMIT ? OFFSET ?"
+    query += " ORDER BY date_reservation DESC LIMIT ? OFFSET ?"
     params.extend([per_page, (page - 1) * per_page])
 
     orders_list = conn.execute(query, params).fetchall()
@@ -182,11 +299,9 @@ def orders():
         product=product
     )
 
-
-
-
-# ---- Orders by client (pas de filtre ici) ----
+# ---- Orders by client ----
 @app.route("/clients/<int:client_id>/orders")
+@login_required
 def client_orders(client_id):
     conn = get_db_connection()
 
@@ -198,6 +313,11 @@ def client_orders(client_id):
         conn.close()
         return "Client not found", 404
 
+    if current_user.role == "client" and current_user.client_id != client_id:
+        conn.close()
+        flash("Accès refusé ❌", "danger")
+        return redirect(url_for("orders"))
+
     page = request.args.get("page", 1, type=int)
     per_page = 10
 
@@ -208,7 +328,7 @@ def client_orders(client_id):
             date_reservation, situation, reste
         FROM orders
         WHERE client = ?
-        ORDER BY num_reservation ASC
+        ORDER BY date_reservation DESC
         LIMIT ? OFFSET ?
         """,
         (client["company_name"], per_page, (page - 1) * per_page),
@@ -235,9 +355,9 @@ def client_orders(client_id):
         total_orders=total_orders
     )
 
-
 # ---- Delivery (pagination + filtres) ----
 @app.route("/delivery")
+@login_required
 def delivery():
     conn = get_db_connection()
 
@@ -260,7 +380,12 @@ def delivery():
 
     today = datetime.today().date()
 
-    # --- Filtre période ---
+    if current_user.role == "client":
+        query += " AND code_client = ?"
+        count_query += " AND code_client = ?"
+        params.append(current_user.client_id)
+        count_params.append(current_user.client_id)
+
     if period == "today":
         query += " AND date(date_livraison) = ?"
         count_query += " AND date(date_livraison) = ?"
@@ -291,8 +416,7 @@ def delivery():
         params.append(start)
         count_params.append(start)
 
-    # --- Filtre client ---
-    if client:
+    if client and current_user.role == "admin":
         tokens = [t for t in client.split() if t]
         pattern = "%" + "%".join(tokens) + "%"
         query += " AND client LIKE ? COLLATE NOCASE"
@@ -300,7 +424,6 @@ def delivery():
         params.append(pattern)
         count_params.append(pattern)
 
-    # --- Filtre produit ---
     if product:
         tokens = [t for t in product.split() if t]
         pattern = "%" + "%".join(tokens) + "%"
@@ -309,8 +432,7 @@ def delivery():
         params.append(pattern)
         count_params.append(pattern)
 
-    # --- Pagination ---
-    query += " ORDER BY nl ASC LIMIT ? OFFSET ?"
+    query += " ORDER BY date_livraison DESC LIMIT ? OFFSET ?"
     params.extend([per_page, (page - 1) * per_page])
 
     delivery_list = conn.execute(query, params).fetchall()
@@ -335,9 +457,9 @@ def delivery():
         product=product
     )
 
-
-# ---- Delivery by client (pas de filtre ici) ----
+# ---- Delivery by client ----
 @app.route("/clients/<int:client_id>/delivery")
+@login_required
 def client_delivery(client_id):
     conn = get_db_connection()
 
@@ -348,6 +470,11 @@ def client_delivery(client_id):
     if not client:
         conn.close()
         return "Client not found", 404
+
+    if current_user.role == "client" and current_user.client_id != client_id:
+        conn.close()
+        flash("Accès refusé ❌", "danger")
+        return redirect(url_for("delivery"))
 
     page = request.args.get("page", 1, type=int)
     per_page = 10
@@ -360,7 +487,7 @@ def client_delivery(client_id):
             observation, produit
         FROM delivery
         WHERE code_client = ?
-        ORDER BY nl ASC
+        ORDER BY date_livraison DESC
         LIMIT ? OFFSET ?
         """,
         (client_id, per_page, (page - 1) * per_page),
@@ -387,9 +514,9 @@ def client_delivery(client_id):
         total_delivery=total_delivery
     )
 
-
-# ---- Delivery by order (pagination + retour dynamique) ----
+# ---- Delivery by order ----
 @app.route("/orders/<int:order_id>/delivery")
+@login_required
 def order_delivery(order_id):
     conn = get_db_connection()
 
@@ -405,7 +532,7 @@ def order_delivery(order_id):
             observation, produit
         FROM delivery
         WHERE num_reservation = ?
-        ORDER BY nl ASC
+        ORDER BY date_livraison DESC
         LIMIT ? OFFSET ?
         """,
         (order_id, per_page, (page - 1) * per_page),
@@ -422,6 +549,20 @@ def order_delivery(order_id):
 
     conn.close()
 
+    if current_user.role == "client":
+        check = get_db_connection().execute(
+            "SELECT client FROM orders WHERE num_reservation = ?", (order_id,)
+        ).fetchone()
+        if not check:
+            flash("Commande introuvable ❌", "danger")
+            return redirect(url_for("orders"))
+        client_name = get_db_connection().execute(
+            "SELECT Entreprise FROM client WHERE N = ?", (current_user.client_id,)
+        ).fetchone()["Entreprise"]
+        if check["client"] != client_name:
+            flash("Accès refusé ❌", "danger")
+            return redirect(url_for("orders"))
+
     return render_template(
         "order_delivery.html",
         order_id=order_id,
@@ -434,6 +575,75 @@ def order_delivery(order_id):
         from_client=from_client
     )
 
+# ---- Créer un compte utilisateur pour un client ----
+@app.route("/admin/create_user", methods=["GET", "POST"])
+@login_required
+def create_user():
+    if current_user.role != "admin":
+        flash("Accès refusé : réservé aux administrateurs ❌", "danger")
+        return redirect(url_for("index"))
+
+    conn = get_db_connection()
+    clients = conn.execute("SELECT N AS id, Entreprise AS company_name FROM client").fetchall()
+
+    if request.method == "POST":
+        username = request.form["username"].strip()
+        password = request.form["password"].strip()
+        client_id = request.form["client_id"]
+
+        exists = conn.execute("SELECT id FROM users WHERE username = ?", (username,)).fetchone()
+        if exists:
+            flash("❌ Ce nom d'utilisateur existe déjà", "danger")
+            conn.close()
+            return redirect(url_for("create_user"))
+
+        password_hash = generate_password_hash(password)
+        conn.execute(
+            "INSERT INTO users (username, password_hash, role, client_id) VALUES (?, ?, ?, ?)",
+            (username, password_hash, "client", client_id)
+        )
+        conn.commit()
+        conn.close()
+
+        flash(f"✅ Compte '{username}' créé avec succès", "success")
+        return redirect(url_for("clients"))
+
+    conn.close()
+    return render_template("create_user.html", clients=clients)
+
+# ---- Liste et suppression des utilisateurs ----
+@app.route("/admin/users")
+@login_required
+def list_users():
+    if current_user.role != "admin":
+        flash("Accès refusé ❌", "danger")
+        return redirect(url_for("index"))
+
+    conn = get_db_connection()
+    users = conn.execute("""
+        SELECT u.id, u.username, u.role, u.client_id, c.Entreprise AS client_name
+        FROM users u
+        LEFT JOIN client c ON u.client_id = c.N
+        ORDER BY u.id ASC
+    """).fetchall()
+    conn.close()
+
+    return render_template("list_users.html", users=users)
+
+@app.route("/admin/users/delete/<int:user_id>", methods=["POST"])
+@login_required
+def delete_user(user_id):
+    if current_user.role != "admin":
+        flash("Accès refusé ❌", "danger")
+        return redirect(url_for("index"))
+
+    conn = get_db_connection()
+    conn.execute("DELETE FROM users WHERE id = ?", (user_id,))
+    conn.commit()
+    conn.close()
+
+    flash("✅ Utilisateur supprimé avec succès", "success")
+    return redirect(url_for("list_users"))
 
 if __name__ == "__main__":
     app.run(debug=True)
