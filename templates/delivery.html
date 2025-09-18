@@ -60,7 +60,9 @@
         <thead class="table-dark">
           <tr>
             <th>NL</th>
-            <th>Client</th>
+            {% if current_user.role == 'admin' %}
+              <th>Client</th>
+            {% endif %}
             <th>Produit</th>
             <th>Quantité</th>
             <th>Date livraison</th>
@@ -71,7 +73,9 @@
           {% for d in delivery %}
           <tr>
             <td>{{ d.nl }}</td>
-            <td>{{ d.client }}</td>
+            {% if current_user.role == 'admin' %}
+              <td>{{ d.client }}</td>
+            {% endif %}
             <td>{{ d.produit }}</td>
             <td>{{ d.qte }}</td>
             <td>{{ d.date_livraison }}</td>

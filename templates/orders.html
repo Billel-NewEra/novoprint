@@ -74,7 +74,9 @@
           <tr>
             <th>N° Cmd</th>
             <th>CMDCL</th>
-            <th>Client</th>
+            {% if current_user.role == 'admin' %}
+              <th>Client</th>
+            {% endif %}
             <th>Produit</th>
             <th>Quantité</th>
             <th>Date</th>
@@ -88,7 +90,9 @@
           <tr>
             <td>{{ o.num_reservation }}</td>
             <td>{{ o.cmdl }}</td>
-            <td>{{ o.client }}</td>
+            {% if current_user.role == 'admin' %}
+              <td>{{ o.client }}</td>
+            {% endif %}
             <td>{{ o.produit }}</td>
             <td>{{ o.qte }}</td>
             <td>{{ o.date_reservation }}</td>
