@@ -8,6 +8,16 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="{{ url_for('static', filename='css/style.css') }}" rel="stylesheet">
     <link rel="manifest" href="{{ url_for('static', filename='manifest.json') }}">
+    <style>
+      /* --- Ajustement badge client --- */
+      @media (max-width: 767.98px) {
+        .client-badge {
+          display: block;
+          text-align: center;
+          margin-top: 4px;
+        }
+      }
+    </style>
   </head>
   <script>
   if ("serviceWorker" in navigator) {
@@ -19,104 +29,99 @@
   <body>
 
     <!-- Navbar -->
-    <!-- Navbar -->
-<!-- Navbar -->
-<nav class="navbar navbar-expand-lg navbar-light bg-light sticky-top shadow-sm">
-  <div class="container-fluid">
+    <nav class="navbar navbar-expand-lg navbar-light bg-light sticky-top shadow-sm">
+      <div class="container-fluid">
+        <!-- Logo + Nom Entreprise -->
+        <a class="navbar-brand d-flex flex-column flex-lg-row align-items-lg-center" href="{{ url_for('index') }}">
+          <div class="d-flex align-items-center">
+            <img src="{{ url_for('static', filename='img/logo.png') }}" alt="Logo" class="logo me-2">
+            <span class="brand-text fw-bold">Novoprint</span>
+          </div>
+          {% if current_user.is_authenticated and current_user.role == 'client' %}
+            <span class="badge bg-primary ms-lg-2 client-badge">
+              {{ client_name }}
+            </span>
+          {% endif %}
+        </a>
 
-    <!-- Logo + Nom Entreprise -->
-    <a class="navbar-brand d-flex flex-column flex-lg-row align-items-start align-items-lg-center" href="{{ url_for('index') }}">
-      <div class="d-flex align-items-center">
-        <img src="{{ url_for('static', filename='img/logo.png') }}" alt="Logo" class="logo me-2">
-        <span class="brand-text fw-bold">Novoprint</span>
+        <!-- Burger (mobile) -->
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+          <span class="navbar-toggler-icon"></span>
+        </button>
+
+        <!-- Liens -->
+        <div class="collapse navbar-collapse" id="navbarNav">
+          <ul class="navbar-nav ms-auto">
+            {% if current_user.is_authenticated %}
+
+              <!-- Dashboard -->
+              <li class="nav-item">
+                <a class="nav-link {% if request.endpoint == 'index' %}active{% endif %}" href="{{ url_for('index') }}">
+                  🏠 Dashboard
+                </a>
+              </li>
+
+              <!-- Clients -->
+              {% if current_user.role == 'admin' %}
+              <li class="nav-item">
+                <a class="nav-link {% if request.endpoint == 'clients' %}active{% endif %}" href="{{ url_for('clients') }}">
+                  👥 Clients
+                </a>
+              </li>
+              {% endif %}
+
+              <!-- Commandes -->
+              <li class="nav-item">
+                <a class="nav-link {% if request.endpoint == 'orders' %}active{% endif %}" href="{{ url_for('orders') }}">
+                  📦 {% if current_user.role == 'admin' %}Commandes{% else %}Mes commandes{% endif %}
+                </a>
+              </li>
+
+              <!-- Livraisons -->
+              <li class="nav-item">
+                <a class="nav-link {% if request.endpoint == 'delivery' %}active{% endif %}" href="{{ url_for('delivery') }}">
+                  🚚 {% if current_user.role == 'admin' %}Livraisons{% else %}Mes livraisons{% endif %}
+                </a>
+              </li>
+
+              <!-- Administration dropdown -->
+              {% if current_user.role == 'admin' %}
+              <li class="nav-item dropdown">
+                <a class="nav-link dropdown-toggle {% if request.endpoint in ['list_users','create_user'] %}active{% endif %}"
+                   href="#" id="adminMenu" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                  ⚙️ Administration
+                </a>
+                <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="adminMenu">
+                  <li><a class="dropdown-item" href="{{ url_for('list_users') }}">👤 Gestion utilisateurs</a></li>
+                  <li><a class="dropdown-item" href="{{ url_for('create_user') }}">➕ Créer un utilisateur</a></li>
+                </ul>
+              </li>
+              {% endif %}
+
+              <!-- Utilisateur connecté (dropdown) -->
+              <li class="nav-item dropdown">
+                <a class="nav-link dropdown-toggle" href="#" id="userMenu" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                  👤 {{ current_user.username }} ({{ current_user.role }})
+                </a>
+                <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userMenu">
+                  <li><span class="dropdown-item-text fw-bold">Connecté en tant que {{ current_user.username }}</span></li>
+                  <li><hr class="dropdown-divider"></li>
+                  <li><a class="dropdown-item" href="{{ url_for('logout') }}">🚪 Se déconnecter</a></li>
+                </ul>
+              </li>
+
+            {% else %}
+              <!-- Si non connecté -->
+              <li class="nav-item">
+                <a class="nav-link {% if request.endpoint == 'login' %}active{% endif %}" href="{{ url_for('login') }}">
+                  Se connecter
+                </a>
+              </li>
+            {% endif %}
+          </ul>
+        </div>
       </div>
-      {% if current_user.is_authenticated and current_user.role == 'client' %}
-        <!-- Badge client : sous Novoprint en mobile -->
-        <span class="badge bg-primary mt-1 ms-lg-2" style="font-size:0.9rem;">
-          {{ client_name }}
-        </span>
-      {% endif %}
-    </a>
-
-    <!-- Burger (mobile) aligné à droite -->
-    <button class="navbar-toggler ms-auto" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
-      <span class="navbar-toggler-icon"></span>
-    </button>
-
-    <!-- Liens -->
-    <div class="collapse navbar-collapse" id="navbarNav">
-      <ul class="navbar-nav ms-auto">
-        {% if current_user.is_authenticated %}
-
-          <!-- Dashboard -->
-          <li class="nav-item">
-            <a class="nav-link {% if request.endpoint == 'index' %}active{% endif %}" href="{{ url_for('index') }}">
-              🏠 Dashboard
-            </a>
-          </li>
-
-          <!-- Clients -->
-          {% if current_user.role == 'admin' %}
-          <li class="nav-item">
-            <a class="nav-link {% if request.endpoint == 'clients' %}active{% endif %}" href="{{ url_for('clients') }}">
-              👥 Clients
-            </a>
-          </li>
-          {% endif %}
-
-          <!-- Commandes -->
-          <li class="nav-item">
-            <a class="nav-link {% if request.endpoint == 'orders' %}active{% endif %}" href="{{ url_for('orders') }}">
-              📦 {% if current_user.role == 'admin' %}Commandes{% else %}Mes commandes{% endif %}
-            </a>
-          </li>
-
-          <!-- Livraisons -->
-          <li class="nav-item">
-            <a class="nav-link {% if request.endpoint == 'delivery' %}active{% endif %}" href="{{ url_for('delivery') }}">
-              🚚 {% if current_user.role == 'admin' %}Livraisons{% else %}Mes livraisons{% endif %}
-            </a>
-          </li>
-
-          <!-- Administration dropdown -->
-          {% if current_user.role == 'admin' %}
-          <li class="nav-item dropdown">
-            <a class="nav-link dropdown-toggle {% if request.endpoint in ['list_users','create_user'] %}active{% endif %}"
-               href="#" id="adminMenu" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-              ⚙️ Administration
-            </a>
-            <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="adminMenu">
-              <li><a class="dropdown-item" href="{{ url_for('list_users') }}">👤 Gestion utilisateurs</a></li>
-              <li><a class="dropdown-item" href="{{ url_for('create_user') }}">➕ Créer un utilisateur</a></li>
-            </ul>
-          </li>
-          {% endif %}
-
-          <!-- Utilisateur connecté (dropdown) -->
-          <li class="nav-item dropdown">
-            <a class="nav-link dropdown-toggle" href="#" id="userMenu" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-              👤 {{ current_user.username }} ({{ current_user.role }})
-            </a>
-            <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userMenu">
-              <li><span class="dropdown-item-text fw-bold">Connecté en tant que {{ current_user.username }}</span></li>
-              <li><hr class="dropdown-divider"></li>
-              <li><a class="dropdown-item" href="{{ url_for('logout') }}">🚪 Se déconnecter</a></li>
-            </ul>
-          </li>
-
-        {% else %}
-          <!-- Si non connecté -->
-          <li class="nav-item">
-            <a class="nav-link {% if request.endpoint == 'login' %}active{% endif %}" href="{{ url_for('login') }}">
-              Se connecter
-            </a>
-          </li>
-        {% endif %}
-      </ul>
-    </div>
-  </div>
-</nav>
-
+    </nav>
 
     <!-- Toast container -->
     <div class="toast-container position-fixed bottom-0 start-50 translate-middle-x p-3" style="z-index: 1100">
