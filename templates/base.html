@@ -175,7 +175,7 @@
       document.addEventListener("DOMContentLoaded", function () {
         const toastElList = [].slice.call(document.querySelectorAll('.toast'));
         toastElList.map(function (toastEl) {
-          const t = new bootstrap.Toast(toastEl, { delay: 4000 });
+          const t = new bootstrap.Toast(toastEl, { delay: 1000 });
           t.show();
         });
       });
