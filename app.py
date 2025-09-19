@@ -86,6 +86,9 @@ def whoami():
 # ============================
 
 @app.context_processor
+def inject_now():
+    from datetime import datetime
+    return {'current_year': datetime.now().year}
 def inject_client_name():
     client_name = None
     if current_user.is_authenticated and current_user.role == "client":

@@ -15,7 +15,6 @@
         position: relative;
         top: 2px; /* descend légèrement le badge */
       }
-      /* --- Ajustement badge client --- */
       @media (max-width: 767.98px) {
         .client-badge {
           display: block;
@@ -23,8 +22,6 @@
           margin-top: 4px;
         }
       }
-
-      
     </style>
   </head>
   <script>
@@ -53,11 +50,11 @@
         </a>
 
         <!-- Burger (mobile) -->
-<button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
-  <span class="navbar-toggler-icon">
-    <div></div> <!-- 3ème barre -->
-  </span>
-</button>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+          <span class="navbar-toggler-icon">
+            <div></div> <!-- 3ème barre -->
+          </span>
+        </button>
 
         <!-- Liens -->
         <div class="collapse navbar-collapse" id="navbarNav">
@@ -104,34 +101,34 @@
                   <i class="bi bi-gear-fill text-admin me-1"></i> Administration
                 </a>
                 <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="adminMenu">
-                  <li><a class="dropdown-item" href="{{ url_for('list_users') }}"><i class="bi bi-person-lines-fill me-1"></i> Gestion utilisateurs</a></li>
-                  <li><a class="dropdown-item" href="{{ url_for('create_user') }}"><i class="bi bi-person-plus-fill me-1"></i> Créer un utilisateur</a></li>
+                  <li><a class="dropdown-item" href="{{ url_for('list_users') }}"><i class="bi bi-person-lines-fill me-1"></i> Gestion des comptes clients</a></li>
+                  <li><a class="dropdown-item" href="{{ url_for('create_user') }}"><i class="bi bi-person-plus-fill me-1"></i> Créer un compte client</a></li>
                 </ul>
               </li>
               {% endif %}
 
               <!-- Utilisateur connecté (dropdown) -->
-<li class="nav-item dropdown">
-  <a class="nav-link dropdown-toggle" href="#" id="userMenu" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-    {% if current_user.role == 'admin' %}
-      <i class="bi bi-person-circle text-admin-connexion me-1"></i>
-    {% elif current_user.role == 'client' %}
-      <i class="bi bi-person-circle text-client me-1"></i>
-    {% else %}
-      <i class="bi bi-person-circle text-secondary me-1"></i>
-    {% endif %}
-    {{ current_user.username }} ({{ current_user.role }})
-  </a>
-  <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userMenu">
-    <li><span class="dropdown-item-text fw-bold">Connecté en tant que {{ current_user.username }}</span></li>
-    <li><hr class="dropdown-divider"></li>
-    <li>
-      <a class="dropdown-item text-danger" href="{{ url_for('logout') }}">
-        <i class="bi bi-box-arrow-right text-danger me-1"></i> Se déconnecter
-      </a>
-    </li>
-  </ul>
-</li>
+              <li class="nav-item dropdown">
+                <a class="nav-link dropdown-toggle" href="#" id="userMenu" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                  {% if current_user.role == 'admin' %}
+                    <i class="bi bi-person-circle text-admin-connexion me-1"></i>
+                  {% elif current_user.role == 'client' %}
+                    <i class="bi bi-person-circle text-client me-1"></i>
+                  {% else %}
+                    <i class="bi bi-person-circle text-secondary me-1"></i>
+                  {% endif %}
+                  {{ current_user.username }} ({{ current_user.role }})
+                </a>
+                <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userMenu">
+                  <li><span class="dropdown-item-text fw-bold">Connecté en tant que {{ current_user.username }}</span></li>
+                  <li><hr class="dropdown-divider"></li>
+                  <li>
+                    <a class="dropdown-item text-danger" href="{{ url_for('logout') }}">
+                      <i class="bi bi-box-arrow-right text-danger me-1"></i> Se déconnecter
+                    </a>
+                  </li>
+                </ul>
+              </li>
 
             {% else %}
               <!-- Si non connecté -->
@@ -165,36 +162,32 @@
     </div>
 
     <!-- Contenu principal -->
-    <div class="container mt-4">
+    <main class="container mt-4">
       {% block content %}{% endblock %}
-    </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-dark text-light text-center py-3 mt-5 shadow-lg">
+      <small>&copy; {{ current_year }} Powered by <span class="fw-bold text-warning">MobiPrint</span></small>
+    </footer>
 
     <!-- JS Bootstrap -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
       document.addEventListener("DOMContentLoaded", function () {
+        // Toasts
         const toastElList = [].slice.call(document.querySelectorAll('.toast'));
         toastElList.map(function (toastEl) {
-          const t = new bootstrap.Toast(toastEl, { delay: 1000 });
+          const t = new bootstrap.Toast(toastEl, { delay: 4000 });
           t.show();
+        });
+
+        // Tooltips
+        const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+        tooltipTriggerList.map(function (tooltipTriggerEl) {
+          return new bootstrap.Tooltip(tooltipTriggerEl);
         });
       });
     </script>
-    <script>
-  document.addEventListener("DOMContentLoaded", function () {
-    // Toasts (ton code existant)
-    const toastElList = [].slice.call(document.querySelectorAll('.toast'));
-    toastElList.map(function (toastEl) {
-      const t = new bootstrap.Toast(toastEl, { delay: 4000 });
-      t.show();
-    });
-
-    // Tooltips (nouveau)
-    const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
-    tooltipTriggerList.map(function (tooltipTriggerEl) {
-      return new bootstrap.Tooltip(tooltipTriggerEl);
-    });
-  });
-</script>
   </body>
 </html>
