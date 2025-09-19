@@ -15,16 +15,15 @@
         position: relative;
         top: 2px; /* descend légèrement le badge */
       }
-      /* --- Ajustement badge client --- */
+
       @media (max-width: 767.98px) {
         .client-badge {
           display: block;
           text-align: center;
           margin-top: 4px;
+          top: 0; /* pas de décalage en mobile */
         }
       }
-
-      
     </style>
   </head>
   <script>
@@ -46,18 +45,16 @@
             <span class="brand-text fw-bold">Novoprint</span>
           </div>
           {% if current_user.is_authenticated and current_user.role == 'client' %}
-            <span class="badge bg-primary ms-lg-2 client-badge align-middle">
+            <span class="badge bg-primary ms-lg-2 client-badge">
               {{ client_name }}
             </span>
           {% endif %}
         </a>
 
         <!-- Burger (mobile) -->
-<button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
-  <span class="navbar-toggler-icon">
-    <div></div> <!-- 3ème barre -->
-  </span>
-</button>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+          <span class="navbar-toggler-icon"></span>
+        </button>
 
         <!-- Liens -->
         <div class="collapse navbar-collapse" id="navbarNav">
@@ -99,7 +96,7 @@
               <!-- Administration dropdown -->
               {% if current_user.role == 'admin' %}
               <li class="nav-item dropdown">
-                <a class="nav-link dropdown-toggle {% if request.endpoint in ['list_users','create_user'] %}active{% endif %} text-danger"
+                <a class="nav-link dropdown-toggle {% if request.endpoint in ['list_users','create_user'] %}active{% endif %}"
                    href="#" id="adminMenu" role="button" data-bs-toggle="dropdown" aria-expanded="false">
                   <i class="bi bi-gear-fill text-admin me-1"></i> Administration
                 </a>
@@ -111,33 +108,22 @@
               {% endif %}
 
               <!-- Utilisateur connecté (dropdown) -->
-<li class="nav-item dropdown">
-  <a class="nav-link dropdown-toggle" href="#" id="userMenu" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-    {% if current_user.role == 'admin' %}
-      <i class="bi bi-person-circle text-admin-connexion me-1"></i>
-    {% elif current_user.role == 'client' %}
-      <i class="bi bi-person-circle text-client me-1"></i>
-    {% else %}
-      <i class="bi bi-person-circle text-secondary me-1"></i>
-    {% endif %}
-    {{ current_user.username }} ({{ current_user.role }})
-  </a>
-  <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userMenu">
-    <li><span class="dropdown-item-text fw-bold">Connecté en tant que {{ current_user.username }}</span></li>
-    <li><hr class="dropdown-divider"></li>
-    <li>
-      <a class="dropdown-item text-danger" href="{{ url_for('logout') }}">
-        <i class="bi bi-box-arrow-right text-danger me-1"></i> Se déconnecter
-      </a>
-    </li>
-  </ul>
-</li>
+              <li class="nav-item dropdown">
+                <a class="nav-link dropdown-toggle" href="#" id="userMenu" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                  <i class="bi bi-person-circle text-secondary me-1"></i> {{ current_user.username }} ({{ current_user.role }})
+                </a>
+                <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userMenu">
+                  <li><span class="dropdown-item-text fw-bold">Connecté en tant que {{ current_user.username }}</span></li>
+                  <li><hr class="dropdown-divider"></li>
+                  <li><a class="dropdown-item" href="{{ url_for('logout') }}"><i class="bi bi-box-arrow-right me-1"></i> Se déconnecter</a></li>
+                </ul>
+              </li>
 
             {% else %}
               <!-- Si non connecté -->
               <li class="nav-item">
                 <a class="nav-link {% if request.endpoint == 'login' %}active{% endif %}" href="{{ url_for('login') }}">
-                  Se connecter
+                  <i class="bi bi-box-arrow-in-right text-primary me-1"></i> Se connecter
                 </a>
               </li>
             {% endif %}
@@ -180,21 +166,5 @@
         });
       });
     </script>
-    <script>
-  document.addEventListener("DOMContentLoaded", function () {
-    // Toasts (ton code existant)
-    const toastElList = [].slice.call(document.querySelectorAll('.toast'));
-    toastElList.map(function (toastEl) {
-      const t = new bootstrap.Toast(toastEl, { delay: 4000 });
-      t.show();
-    });
-
-    // Tooltips (nouveau)
-    const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
-    tooltipTriggerList.map(function (tooltipTriggerEl) {
-      return new bootstrap.Tooltip(tooltipTriggerEl);
-    });
-  });
-</script>
   </body>
 </html>

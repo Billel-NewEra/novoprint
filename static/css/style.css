@@ -116,4 +116,59 @@ body {
   border-radius: 0.3rem;
 }
 
+/* Administration = Rouge */
+.text-admin {
+  color: #dc3545 !important; /* rouge Bootstrap "danger" */
+}
+.border-admin {
+  border-color: #dc3545 !important;
+}
+.btn-admin {
+  background-color: #dc3545; 
+  color: white;
+  border: none;
+}
+.btn-admin:hover {
+  background-color: #b02a37; /* rouge un peu plus foncé */
+  color: white;
+}
+
+.text-admin-connexion {
+  color: #35dc3bcc !important; /* rouge Bootstrap "danger" */
+}
+
+/* --- Hamburger custom bien centré --- */
+.navbar-toggler {
+  background-color: #ff691e; /* orange client */
+  border: none;
+  padding: 6px 10px;
+  border-radius: 5px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* On remplace l'icône par défaut par trois barres */
+.navbar-toggler-icon {
+  background-image: none !important; /* désactive l'icône bootstrap */
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  width: 20px;
+  height: 16px; /* espace total pour 3 barres */
+}
+
+.navbar-toggler-icon::before,
+.navbar-toggler-icon::after,
+.navbar-toggler-icon div {
+  content: "";
+  display: block;
+  height: 2px;
+  width: 100%;
+  background-color: white; /* barres blanches */
+  border-radius: 2px;
+}
+
+/* On ajoute une 3ème barre via un <div> dans base.html */
+
 

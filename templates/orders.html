@@ -99,9 +99,9 @@
             <td>{{ o.situation }}</td>
             <td>{{ o.reste }}</td>
             <td>
-              <a href="{{ url_for('order_delivery', order_id=o.num_reservation) }}" 
-                 class="btn btn-sm btn-delivery ">
-                🚚 Voir livraisons
+              <a href="{{ url_for('order_delivery', order_id=o.num_reservation) }}" data-bs-toggle="tooltip" 
+                   data-bs-placement="bottom" title="Voir la liste des livraisons" 
+                 class="btn btn-sm btn-delivery bi-eye">
               </a>
             </td>
           </tr>
