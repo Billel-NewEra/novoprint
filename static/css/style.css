@@ -50,10 +50,6 @@ body {
   background: white;
   border-radius: 6px;
   overflow: hidden;
-  width: 100%;                /* occupe 100% de la largeur dispo */
-  table-layout: auto;         /* largeur auto selon contenu */
-  word-wrap: break-word;      /* casse les mots trop longs */
-  white-space: normal;        /* permet retour à la ligne */
 }
 
 /* Clients = Orange */
@@ -171,7 +167,6 @@ body {
 
 html, body {
   height: 100%;
-  overflow-x: hidden;
 }
 
 body {
@@ -181,7 +176,7 @@ body {
 
 /* Contenu principal */
 main {
-  flex: 1 0 auto; /* prend tout l'espace restant */
+  flex: 1;
 }
 
 /* Pagination spacing responsive */
@@ -208,7 +203,6 @@ footer {
   flex-shrink: 0;
   border-top: 1px solid #444;       /* fine bordure claire */
   box-shadow: 0 -2px 6px rgba(0,0,0,0.3); /* ombre subtile en haut */
-  margin-top: auto;
 }
 
 /* Effet hover sur "MobiPrint" */
@@ -242,7 +236,11 @@ footer .brand-signature.glow-once {
   animation: glow-once 0.3s ease-in-out forwards;
 }
 
-.table-responsive {
-  overflow-x: auto;           /* permet un scroll horizontal si nécessaire */
-  -webkit-overflow-scrolling: touch;
+.container, .row, main, body, html {
+  max-width: 100%;
+  overflow-x: hidden;
 }
+
+/* * {
+  outline: 1px solid red; /* Debug */
+/* }
