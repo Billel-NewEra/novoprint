@@ -168,8 +168,10 @@
 
     <!-- Footer -->
     <footer class="bg-dark text-light text-center py-3 shadow-lg">
-      <small>&copy; {{ current_year }} Powered by <span class="fw-bold text-warning">MobiPrint</span></small>
-    </footer>
+  <small>&copy; {{ current_year }} Powered by 
+    <span class="fw-bold brand-signature">MobiPrint</span>
+  </small>
+</footer>
 
     <!-- JS Bootstrap -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
@@ -189,5 +191,23 @@
         });
       });
     </script>
+    <script>
+  document.addEventListener("DOMContentLoaded", function () {
+    const mobiprint = document.querySelector("footer .brand-signature");
+    const observer = new IntersectionObserver(entries => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          mobiprint.classList.add("glow");
+          // Retire l'effet après 2 secondes
+          setTimeout(() => {
+            mobiprint.classList.remove("glow");
+          }, 800);
+        }
+      });
+    }, { threshold: 0.5 });
+
+    observer.observe(mobiprint);
+  });
+</script>
   </body>
 </html>

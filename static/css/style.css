@@ -19,9 +19,8 @@ body {
   box-shadow: 0px 2px 6px rgba(0,0,0,0.08);
 }
 
-
 .navbar .brand-text {
-  font-size: 1.5rem; /* texte plus grand */
+  font-size: 1.5rem;
   color: #2a73d9;
 }
 
@@ -64,14 +63,12 @@ body {
   color: white;
 }
 
-/* Orange foncé personnalisé */
 .text-client {
   color: #e68a00 !important;
 }
 .border-client {
   border-color: #e68a00 !important;
 }
-
 
 /* Commandes = Bleu */
 .btn-order {
@@ -118,7 +115,7 @@ body {
 
 /* Administration = Rouge */
 .text-admin {
-  color: #dc3545 !important; /* rouge Bootstrap "danger" */
+  color: #dc3545 !important;
 }
 .border-admin {
   border-color: #dc3545 !important;
@@ -129,17 +126,17 @@ body {
   border: none;
 }
 .btn-admin:hover {
-  background-color: #b02a37; /* rouge un peu plus foncé */
+  background-color: #b02a37;
   color: white;
 }
 
 .text-admin-connexion {
-  color: #35dc3bcc !important; /* rouge Bootstrap "danger" */
+  color: #35dc3bcc !important;
 }
 
-/* --- Hamburger custom bien centré --- */
+/* --- Hamburger custom --- */
 .navbar-toggler {
-  background-color: #ff691e; /* orange client */
+  background-color: #ff691e;
   border: none;
   padding: 6px 10px;
   border-radius: 5px;
@@ -148,14 +145,13 @@ body {
   justify-content: center;
 }
 
-/* On remplace l'icône par défaut par trois barres */
 .navbar-toggler-icon {
-  background-image: none !important; /* désactive l'icône bootstrap */
+  background-image: none !important;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
   width: 20px;
-  height: 16px; /* espace total pour 3 barres */
+  height: 16px;
 }
 
 .navbar-toggler-icon::before,
@@ -165,11 +161,9 @@ body {
   display: block;
   height: 2px;
   width: 100%;
-  background-color: white; /* barres blanches */
+  background-color: white;
   border-radius: 2px;
 }
-
-/* On ajoute une 3ème barre via un <div> dans base.html */
 
 html, body {
   height: 100%;
@@ -180,8 +174,52 @@ body {
   flex-direction: column;
 }
 
+/* Contenu principal */
 main {
   flex: 1;
 }
 
+/* Pagination spacing responsive */
+.pagination {
+  margin-bottom: 30px; /* mobile */
+}
 
+@media (min-width: 768px) {
+  .pagination {
+    margin-bottom: 50px; /* tablette */
+  }
+}
+
+@media (min-width: 1200px) {
+  .pagination {
+    margin-bottom: 70px; /* desktop large */
+  }
+}
+
+/* Footer */
+footer {
+  background-color: #222 !important; /* gris anthracite */
+  color: #f1f1f1 !important;        /* texte adouci */
+  flex-shrink: 0;
+  border-top: 1px solid #444;       /* fine bordure claire */
+  box-shadow: 0 -2px 6px rgba(0,0,0,0.3); /* ombre subtile en haut */
+}
+
+/* Effet hover sur "MobiPrint" */
+footer .brand-signature {
+  color: #ffc107;
+  transition: text-shadow 0.5s ease-in-out;
+}
+
+footer .brand-signature:hover {
+  color: #ffda44; /* plus lumineux */
+  text-shadow: 0 0 8px rgba(255, 218, 68, 0.8); /* halo doré */
+  cursor: pointer;
+}
+
+/* Glow permanent quand la classe "glow" est activée */
+footer .brand-signature.glow {
+  text-shadow: 0 0 10px #ffc107,
+               0 0 20px #ffdd57,
+               0 0 30px #fff176;
+}
