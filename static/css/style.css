@@ -50,6 +50,10 @@ body {
   background: white;
   border-radius: 6px;
   overflow: hidden;
+  width: 100%;                /* occupe 100% de la largeur dispo */
+  table-layout: auto;         /* largeur auto selon contenu */
+  word-wrap: break-word;      /* casse les mots trop longs */
+  white-space: normal;        /* permet retour à la ligne */
 }
 
 /* Clients = Orange */
@@ -236,4 +240,9 @@ footer .brand-signature.glow {
 
 footer .brand-signature.glow-once {
   animation: glow-once 0.3s ease-in-out forwards;
+}
+
+.table-responsive {
+  overflow-x: auto;           /* permet un scroll horizontal si nécessaire */
+  -webkit-overflow-scrolling: touch;
 }
