@@ -194,14 +194,16 @@
     <script>
   document.addEventListener("DOMContentLoaded", function () {
     const mobiprint = document.querySelector("footer .brand-signature");
+    let playedOnce = false;
+
     const observer = new IntersectionObserver(entries => {
       entries.forEach(entry => {
-        if (entry.isIntersecting) {
-          mobiprint.classList.add("glow");
-          // Retire l'effet après 2 secondes
-          setTimeout(() => {
-            mobiprint.classList.remove("glow");
-          }, 800);
+        if (entry.isIntersecting && !playedOnce) {
+          mobiprint.classList.add("glow-once");
+
+          // Empêche de rejouer l’effet
+          playedOnce = true;
+          observer.unobserve(mobiprint);
         }
       });
     }, { threshold: 0.5 });
