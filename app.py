@@ -206,7 +206,7 @@ def orders():
     query = """
         SELECT 
             num_reservation, cmdl, client, produit, qte,
-            date_reservation, situation, reste
+            date_reservation, situation, reste, total_livre
         FROM orders
         WHERE 1=1
     """
@@ -329,7 +329,7 @@ def client_orders(client_id):
         """
         SELECT 
             num_reservation, cmdl, client, produit, qte,
-            date_reservation, situation, reste
+            date_reservation, situation, reste, total_livre
         FROM orders
         WHERE client = ?
         ORDER BY date_reservation DESC

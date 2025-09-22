@@ -53,7 +53,8 @@ def sync(access_path, sqlite_path):
             qte INTEGER,               -- Cmnde
             date_reservation TXT,      -- Date
             situation TEXT,            -- Situation
-            reste REAL                 -- Reste
+            reste REAL,                -- Reste
+            total_livre REAL           -- Total livré
         )
     """)
 
@@ -66,7 +67,8 @@ def sync(access_path, sqlite_path):
             RESERVATION_TABLE.QTE,
             RESERVATION.DATE_RESERVATION,
             RESERVATION.SITUATION,
-            RESERVATION_TABLE.QTE - IIF(ISNULL(Total_livre_cmd.QT),0,Total_livre_cmd.QT) AS Reste
+            RESERVATION_TABLE.QTE - IIF(ISNULL(Total_livre_cmd.QT),0,Total_livre_cmd.QT) AS Reste,
+            IIF(ISNULL(Total_livre_cmd.QT),0,Total_livre_cmd.QT) AS Total_livre
         FROM 
             (CLIENT 
                 INNER JOIN (
@@ -89,7 +91,7 @@ def sync(access_path, sqlite_path):
             ON RESERVATION.NUM_RESERVATION = RESERVATION_TABLE.NUM_RESERVATION
     """)
     for row in rows:
-        cur_sql.execute("INSERT INTO orders VALUES (?,?,?,?,?,?,?,?)", row)
+        cur_sql.execute("INSERT INTO orders VALUES (?,?,?,?,?,?,?,?,?)", row)
 
     # ==============================
     # TABLE matérialisée "delivery"

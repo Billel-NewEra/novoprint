@@ -15,6 +15,7 @@
             <th>Produit</th>
             <th>Quantité</th>
             <th>Situation</th>
+            <th>Livré</th>
             <th>Reste</th>
             <th>Actions</th>
           </tr>
@@ -37,6 +38,7 @@
     <span class="badge bg-secondary">{{ o.situation }}</span>
   {% endif %}
 </td>
+            <td>{{ o.total_livre }}</td>
             <td>{{ o.reste }}</td>
             <td>
               <a href="{{ url_for('order_delivery', order_id=o.num_reservation, from_client=client.id) }}" 
