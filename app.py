@@ -48,57 +48,6 @@ def get_user_by_username(username):
         return User(row["id"], row["username"], row["password_hash"], row["role"], row["client_id"])
     return None
 
-def _period_bounds(periode: str, date_exact: str|None, start: str|None, end: str|None):
-    """Retourne (start_iso, end_iso) selon la période choisie.
-       - 'exact' => une seule date
-       - 'custom' => plage
-       - autres => bornes calculées
-       Renvoie (None, None) si 'all'."""
-    today = date.today()
-
-    if periode == "all":
-        return None, None
-
-    if periode == "exact" and date_exact:
-        # début = fin = cette date
-        return date_exact, date_exact
-
-    if periode == "custom":
-        if start and end:
-            return start, end
-        if start and not end:
-            return start, start
-        if end and not start:
-            return end, end
-        return None, None
-
-    if periode == "today":
-        d = today.isoformat()
-        return d, d
-
-    if periode == "yesterday":
-        d = (today - timedelta(days=1)).isoformat()
-        return d, d
-
-    if periode == "week":
-        # semaine en cours (lundi→dimanche)
-        monday = today - timedelta(days=today.weekday())
-        sunday = monday + timedelta(days=6)
-        return monday.isoformat(), sunday.isoformat()
-
-    if periode == "month":
-        first = today.replace(day=1)
-        last_day = calendar.monthrange(today.year, today.month)[1]
-        last = today.replace(day=last_day)
-        return first.isoformat(), last.isoformat()
-
-    if periode == "year":
-        first = date(today.year, 1, 1)
-        last = date(today.year, 12, 31)
-        return first.isoformat(), last.isoformat()
-
-    return None, None
-
 
 
 
