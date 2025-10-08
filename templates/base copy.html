@@ -68,45 +68,41 @@
                 </a>
               </li>
 
-              <!-- Analyses dropdown -->
-              <li class="nav-item dropdown">
-                <a class="nav-link dropdown-toggle {% if request.endpoint in ['clients', 'orders', 'delivery'] %}active{% endif %}"
-                   href="#" id="analysesMenu" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                  <i class="bi bi-graph-up text-primary me-1"></i> Analyses
+              <!-- Clients -->
+              {% if current_user.role == 'admin' %}
+              <li class="nav-item">
+                <a class="nav-link {% if request.endpoint == 'clients' %}active{% endif %}" href="{{ url_for('clients') }}">
+                  <i class="bi bi-people-fill text-client me-1"></i> Clients
                 </a>
-                <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="analysesMenu">
-                  {% if current_user.role == 'admin' %}
-                  <li>
-                    <a class="dropdown-item {% if request.endpoint == 'clients' %}active{% endif %}" href="{{ url_for('clients') }}">
-                      <i class="bi bi-people-fill text-client me-1"></i> Clients
-                    </a>
-                  </li>
-                  {% endif %}
-                  <li>
-                    <a class="dropdown-item {% if request.endpoint == 'orders' %}active{% endif %}" href="{{ url_for('orders') }}">
-                      <i class="bi bi-box-seam text-info me-1"></i>
-                      {% if current_user.role == 'admin' %}Commandes{% else %}Mes commandes{% endif %}
-                    </a>
-                  </li>
-                  <li>
-                    <a class="dropdown-item {% if request.endpoint == 'delivery' %}active{% endif %}" href="{{ url_for('delivery') }}">
-                      <i class="bi bi-truck text-success me-1"></i>
-                      {% if current_user.role == 'admin' %}Livraisons{% else %}Mes livraisons{% endif %}
-                    </a>
-                  </li>
-                </ul>
+              </li>
+              {% endif %}
+
+              <!-- Commandes -->
+              <li class="nav-item">
+                <a class="nav-link {% if request.endpoint == 'orders' %}active{% endif %}" href="{{ url_for('orders') }}">
+                  <i class="bi bi-box-seam text-info me-1"></i>
+                  {% if current_user.role == 'admin' %}Commandes{% else %}Mes commandes{% endif %}
+                </a>
+              </li>
+
+              <!-- Livraisons -->
+              <li class="nav-item">
+                <a class="nav-link {% if request.endpoint == 'delivery' %}active{% endif %}" href="{{ url_for('delivery') }}">
+                  <i class="bi bi-truck text-success me-1"></i>
+                  {% if current_user.role == 'admin' %}Livraisons{% else %}Mes livraisons{% endif %}
+                </a>
               </li>
 
               <!-- Administration dropdown -->
               {% if current_user.role == 'admin' %}
               <li class="nav-item dropdown">
-                <a class="nav-link dropdown-toggle {% if request.endpoint in ['list_users','create_user'] %}active{% endif %}"
+                <a class="nav-link dropdown-toggle {% if request.endpoint in ['list_users','create_user'] %}active{% endif %} text-danger"
                    href="#" id="adminMenu" role="button" data-bs-toggle="dropdown" aria-expanded="false">
                   <i class="bi bi-gear-fill text-admin me-1"></i> Administration
                 </a>
                 <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="adminMenu">
-                  <li><a class="dropdown-item {% if request.endpoint == 'list_users' %}active{% endif %}" href="{{ url_for('list_users') }}"><i class="bi bi-person-lines-fill text-admin-user me-1"></i> Gestion des comptes clients</a></li>
-                  <li><a class="dropdown-item {% if request.endpoint == 'create_user' %}active{% endif %}" href="{{ url_for('create_user') }}"><i class="bi bi-person-plus-fill text-admin-create me-1"></i> Créer un compte client</a></li>
+                  <li><a class="dropdown-item" href="{{ url_for('list_users') }}"><i class="bi bi-person-lines-fill me-1"></i> Gestion des comptes clients</a></li>
+                  <li><a class="dropdown-item" href="{{ url_for('create_user') }}"><i class="bi bi-person-plus-fill me-1"></i> Créer un compte client</a></li>
                 </ul>
               </li>
               {% endif %}

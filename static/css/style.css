@@ -113,6 +113,14 @@ body {
   border-radius: 0.3rem;
 }
 
+/* Menu Analyses et Administration du Dashboard */
+
+/* Empêche les liens actifs de devenir blancs au survol */
+.navbar .dropdown-item.active:hover {
+  background-color: #e7f1ff !important;
+  color: #0a58ca !important;
+}
+
 /* Administration = Rouge */
 .text-admin {
   color: #dc3545 !important;
@@ -132,6 +140,14 @@ body {
 
 .text-admin-connexion {
   color: #35dc3bcc !important;
+}
+
+/* Icons des sous-menu de Administration  */
+.text-admin-user {
+  color: #be8407 !important;  /* bleu Administration */
+}
+.text-admin-create {
+  color: #d44d0a !important;  /* rouge Administration */
 }
 
 /* --- Hamburger custom --- */
@@ -244,3 +260,4 @@ footer .brand-signature.glow-once {
 /* * {
   outline: 1px solid red; /* Debug */
 /* }
+
