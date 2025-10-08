@@ -167,55 +167,6 @@ def sync(access_path, sqlite_path):
         cur_sql.execute("INSERT INTO delivery VALUES (?,?,?,?,?,?,?,?,?,?,?,?)", clean_row)
 
     # ==============================
-    # TABLE matérialisée "impressions_simplifiees"
-    # ==============================
-    cur_sql.execute("DROP TABLE IF EXISTS impressions_simplifiees")
-    cur_sql.execute("""
-        CREATE TABLE impressions_simplifiees (
-            tirage TEXT,
-            date_impression TEXT,
-            commande TEXT,
-            machine TEXT,
-            article TEXT,
-            longueur REAL,
-            etiquettes INTEGER,
-            chutes_ml REAL,
-            utilisateur TEXT
-        )
-    """)
-
-    rows = cur_acc.execute("""
-        SELECT 
-            IMPRESSION.NUM_IMPRESSION,
-            IMPRESSION.DATE_IMPRESSION,
-            IMPRESSION.NUM_COMMANDE,
-            IMPRESSION.MACHINE_ID,
-            MAQUETTE.DESCRIPTION,
-            IMPRESSION.LONGUEUR,
-            Int([IMPRESSION]![LONGUEUR]*1000*IIF(ISNULL([MAQUETTE]![OPERCULE]),1,[MAQUETTE]![OPERCULE])/[MAQUETTE]![HAUTEUR]) AS Etiquettes,
-            [IMPRESSION]![LONGUEUR]-[DECOUPE]![LONGUEUR] AS Chutes_ml,
-            UTILISATEUR.NOM
-        FROM 
-            ((UTILISATEUR 
-                INNER JOIN IMPRESSION 
-                    ON UTILISATEUR.[N°] = IMPRESSION.USER_ID)
-                INNER JOIN MAQUETTE 
-                    ON IMPRESSION.MAQUETTE_ID = MAQUETTE.CODE_MAQUETTE)
-                INNER JOIN DECOUPE 
-                    ON IMPRESSION.SN = DECOUPE.SN
-    """)
-
-    for row in rows:
-        clean_row = tuple(float(x) if isinstance(x, decimal.Decimal) else x for x in row)
-        cur_sql.execute("""
-            INSERT INTO impressions_simplifiees 
-            (tirage, date_impression, commande, machine, article, longueur, etiquettes, chutes_ml, utilisateur)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-        """, clean_row)
-
-    print("✅ Table 'impressions_simplifiees' synchronized successfully.")
-
-    # ==============================
     # COMMIT & CLOSE
     # ==============================
     conn_sql.commit()

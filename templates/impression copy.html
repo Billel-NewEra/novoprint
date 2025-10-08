@@ -1,0 +1,143 @@
+{% extends "base.html" %}
+{% block title %}Atelier – Impression{% endblock %}
+{% block content %}
+
+<h2 class="mb-4">Liste des Impressions</h2>
+
+<form method="get" action="{{ url_for('impression') }}" class="mb-3">
+  <input type="hidden" name="page" value="{{ page }}">
+  <div class="row g-2 align-items-end">
+
+    <!-- Filtre période -->
+    <div class="col-md">
+      <div class="form-floating">
+        <select id="periode" name="periode" class="form-select" onchange="this.form.submit()">
+          <option value="all" {% if periode == 'all' %}selected{% endif %}>Toutes</option>
+          <option value="today" {% if periode == 'today' %}selected{% endif %}>Aujourd'hui</option>
+          <option value="yesterday" {% if periode == 'yesterday' %}selected{% endif %}>Hier</option>
+          <option value="week" {% if periode == 'week' %}selected{% endif %}>Semaine en cours</option>
+          <option value="month" {% if periode == 'month' %}selected{% endif %}>Mois en cours</option>
+          <option value="year" {% if periode == 'year' %}selected{% endif %}>Année en cours</option>
+          <option value="custom" {% if periode == 'custom' %}selected{% endif %}>Plage personnalisée</option>
+        </select>
+        <label for="periode">📅 Période</label>
+      </div>
+    </div>
+
+    <!-- Plage personnalisée -->
+    <div class="col-md date-range-start">
+      <div class="form-floating">
+        <input type="date" id="date_start" name="date_start" value="{{ date_start }}" class="form-control"
+               onchange="this.form.submit()">
+        <label for="date_start">🕓 Début</label>
+      </div>
+    </div>
+
+    <div class="col-md date-range-end">
+      <div class="form-floating">
+        <input type="date" id="date_end" name="date_end" value="{{ date_end }}" class="form-control"
+               onchange="this.form.submit()">
+        <label for="date_end">🕛 Fin</label>
+      </div>
+    </div>
+
+    <!-- Filtre utilisateur -->
+    <div class="col-md">
+      <div class="form-floating">
+        <select id="user_filter" name="user_filter" class="form-select" onchange="this.form.submit()">
+          <option value="all" {% if user_filter == 'all' %}selected{% endif %}>Tous</option>
+          {% for u in users %}
+            <option value="{{ u }}" {% if user_filter == u %}selected{% endif %}>{{ u }}</option>
+          {% endfor %}
+        </select>
+        <label for="user_filter">👤 Utilisateur</label>
+      </div>
+    </div>
+
+  </div>
+</form>
+
+<div class="card shadow-sm">
+  <div class="card-body">
+    <div class="table-responsive">
+      <table class="table table-striped align-middle table-bordered">
+        <thead class="table-dark">
+          <tr>
+            <th>Tirage</th>
+            <th>Date</th>
+            <th>Commande</th>
+            <th>Machine</th>
+            <th>Article</th>
+            <th>Longueur (m)</th>
+            <th>Étiquettes</th>
+            <th>Chutes (ml)</th>
+            <th>Utilisateur</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% if rows %}
+            {% for r in rows %}
+            <tr>
+              <td>{{ r[0] }}</td>
+              <td>{{ r[1] }}</td>
+              <td>{{ r[2] }}</td>
+              <td>{{ r[3] }}</td>
+              <td>{{ r[4] }}</td>
+              <td>{{ "%.2f"|format(r[5]) if r[5] else "-" }}</td>
+              <td>{{ r[6] }}</td>
+              <td>{{ "%.2f"|format(r[7]) if r[7] else "-" }}</td>
+              <td>{{ r[8] }}</td>
+            </tr>
+            {% endfor %}
+          {% else %}
+            <tr>
+              <td colspan="9" class="text-center text-muted py-3">
+                <i class="bi bi-info-circle me-1"></i> Aucun enregistrement trouvé
+              </td>
+            </tr>
+          {% endif %}
+        </tbody>
+      </table>
+    </div>
+
+    <p class="text-muted mt-2 text-center">
+      Affichage {{ start }} – {{ end }} sur {{ total_rows }} impressions
+    </p>
+
+    {% set endpoint = 'impression' %}
+    {% set params = {
+      'periode': periode,
+      'date_start': date_start,
+      'date_end': date_end,
+      'user_filter': user_filter
+    } %}
+    {% include 'pagination.html' %}
+  </div>
+</div>
+
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+  const periode = document.getElementById("periode");
+  const rangeStart = document.querySelector(".date-range-start");
+  const rangeEnd = document.querySelector(".date-range-end");
+
+  function toggleDateFields() {
+    const value = periode.value;
+    const showRange = (value === "custom");
+    rangeStart.style.display = showRange ? "block" : "none";
+    rangeEnd.style.display = showRange ? "block" : "none";
+  }
+
+  periode.addEventListener("change", toggleDateFields);
+  toggleDateFields();
+
+  // Remise à 1 de la page dès qu’un filtre change
+  document.querySelectorAll('select, input').forEach(el => {
+    el.addEventListener('change', () => {
+      document.querySelector('input[name="page"]').value = 1;
+    });
+  });
+});
+</script>
+
+{% endblock %}

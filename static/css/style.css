@@ -257,6 +257,14 @@ footer .brand-signature.glow-once {
   overflow-x: hidden;
 }
 
+/* Alignement vertical des labels non-floating (comme Select2) */
+.form-label.fw-semibold {
+  margin-bottom: 0.3rem;
+}
+.select2-container {
+  margin-top: 0.1rem;
+}
+
 /* * {
   outline: 1px solid red; /* Debug */
 /* }
