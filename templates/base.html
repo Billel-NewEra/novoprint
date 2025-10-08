@@ -97,23 +97,7 @@
                 </ul>
               </li>
 
-              {% if current_user.role == 'admin' %}
-              <!-- Atelier dropdown -->
-              <li class="nav-item dropdown">
-                <a class="nav-link dropdown-toggle {% if request.endpoint == 'impression' %}active{% endif %}"
-                   href="#" id="atelierMenu" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                  <i class="bi bi-gear-wide-connected text-warning me-1"></i> Atelier
-                </a>
-                <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="atelierMenu">
-                  <li>
-                    <a class="dropdown-item {% if request.endpoint == 'impression' %}active{% endif %}"
-                       href="{{ url_for('impression') }}">
-                      <i class="bi bi-printer-fill text-primary me-1"></i> Impression
-                    </a>
-                  </li>
-                </ul>
-              </li>
-              {% endif %}
+              
 
               <!-- Administration dropdown -->
               {% if current_user.role == 'admin' %}
