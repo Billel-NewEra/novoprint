@@ -1,6 +1,7 @@
 from flask import Flask, render_template, request, redirect, url_for, flash
 import sqlite3
-from datetime import datetime, timedelta
+import calendar
+from datetime import date, datetime, timedelta
 from flask_login import (
     LoginManager, UserMixin, login_user, logout_user,
     login_required, current_user
@@ -46,6 +47,102 @@ def get_user_by_username(username):
     if row:
         return User(row["id"], row["username"], row["password_hash"], row["role"], row["client_id"])
     return None
+
+def _period_bounds(periode: str, date_exact: str|None, start: str|None, end: str|None):
+    """Retourne (start_iso, end_iso) selon la période choisie.
+       - 'exact' => une seule date
+       - 'custom' => plage
+       - autres => bornes calculées
+       Renvoie (None, None) si 'all'."""
+    today = date.today()
+
+    if periode == "all":
+        return None, None
+
+    if periode == "exact" and date_exact:
+        # début = fin = cette date
+        return date_exact, date_exact
+
+    if periode == "custom":
+        if start and end:
+            return start, end
+        if start and not end:
+            return start, start
+        if end and not start:
+            return end, end
+        return None, None
+
+    if periode == "today":
+        d = today.isoformat()
+        return d, d
+
+    if periode == "yesterday":
+        d = (today - timedelta(days=1)).isoformat()
+        return d, d
+
+    if periode == "week":
+        # semaine en cours (lundi→dimanche)
+        monday = today - timedelta(days=today.weekday())
+        sunday = monday + timedelta(days=6)
+        return monday.isoformat(), sunday.isoformat()
+
+    if periode == "month":
+        first = today.replace(day=1)
+        last_day = calendar.monthrange(today.year, today.month)[1]
+        last = today.replace(day=last_day)
+        return first.isoformat(), last.isoformat()
+
+    if periode == "year":
+        first = date(today.year, 1, 1)
+        last = date(today.year, 12, 31)
+        return first.isoformat(), last.isoformat()
+
+    return None, None
+
+
+def _period_bounds_impression(periode: str, date_start: str|None, date_end: str|None):
+    """Retourne (start_iso, end_iso) selon la période choisie pour la page Impression."""
+    today = date.today()
+
+    if periode == "all":
+        return None, None
+
+    if periode == "custom":
+        # plage personnalisée saisie par l'utilisateur
+        if date_start and date_end:
+            return date_start, date_end
+        elif date_start:
+            return date_start, date_start
+        elif date_end:
+            return date_end, date_end
+        else:
+            return None, None
+
+    if periode == "today":
+        d = today.isoformat()
+        return d, d
+
+    if periode == "yesterday":
+        d = (today - timedelta(days=1)).isoformat()
+        return d, d
+
+    if periode == "week":
+        monday = today - timedelta(days=today.weekday())
+        sunday = monday + timedelta(days=6)
+        return monday.isoformat(), sunday.isoformat()
+
+    if periode == "month":
+        first = today.replace(day=1)
+        last_day = calendar.monthrange(today.year, today.month)[1]
+        last = today.replace(day=last_day)
+        return first.isoformat(), last.isoformat()
+
+    if periode == "year":
+        first = date(today.year, 1, 1)
+        last = date(today.year, 12, 31)
+        return first.isoformat(), last.isoformat()
+
+    return None, None
 
 @login_manager.user_loader
 def load_user(user_id):
@@ -648,6 +745,89 @@ def delete_user(user_id):
 
     flash("✅ Utilisateur supprimé avec succès", "success")
     return redirect(url_for("list_users"))
+
+
+# ---- Afficher la table des impressions ----
+@app.route("/impression", methods=["GET"])
+@login_required
+def impression():
+    # Lecture des filtres transmis par l'URL
+    periode     = (request.args.get("periode") or "all").strip()
+    date_start  = request.args.get("date_start")
+    date_end    = request.args.get("date_end")
+    user_filter = (request.args.get("user_filter") or "all").strip()
+
+    # Pagination
+    page = request.args.get("page", 1, type=int)
+    per_page = 15
+
+    # Détermination de la plage de dates (via helper)
+    start_iso, end_iso = _period_bounds_impression(periode, date_start, date_end)
+
+    # Connexion SQLite
+    conn = get_db_connection()
+    cur = conn.cursor()
+
+    # Liste distincte des utilisateurs
+    cur.execute("""
+        SELECT DISTINCT utilisateur 
+        FROM impressions_simplifiees 
+        WHERE utilisateur IS NOT NULL 
+        ORDER BY utilisateur
+    """)
+    users = [r["utilisateur"] for r in cur.fetchall()]
+
+    # Requête principale
+    query = """
+        SELECT tirage, date_impression, commande, machine, article, longueur, etiquettes, chutes_ml, utilisateur
+        FROM impressions_simplifiees
+        WHERE 1=1
+    """
+    count_query = "SELECT COUNT(*) FROM impressions_simplifiees WHERE 1=1"
+    params, count_params = [], []
+
+    # Filtre période
+    if start_iso and end_iso:
+        query += " AND date(date_impression) BETWEEN date(?) AND date(?)"
+        count_query += " AND date(date_impression) BETWEEN date(?) AND date(?)"
+        params.extend([start_iso, end_iso])
+        count_params.extend([start_iso, end_iso])
+
+    # Filtre utilisateur
+    if user_filter != "all":
+        query += " AND utilisateur = ?"
+        count_query += " AND utilisateur = ?"
+        params.append(user_filter)
+        count_params.append(user_filter)
+
+    # Tri + pagination
+    query += " ORDER BY date_impression DESC, tirage DESC LIMIT ? OFFSET ?"
+    params.extend([per_page, (page - 1) * per_page])
+
+    # Exécution
+    rows = cur.execute(query, params).fetchall()
+    total_rows = cur.execute(count_query, count_params).fetchone()[0]
+    conn.close()
+
+    # Pagination calculée
+    total_pages = (total_rows + per_page - 1) // per_page
+    start = (page - 1) * per_page + 1 if total_rows > 0 else 0
+    end = min(page * per_page, total_rows)
+
+    return render_template(
+        "impression.html",
+        rows=rows,
+        users=users,
+        periode=periode,
+        date_start=date_start or "",
+        date_end=date_end or "",
+        user_filter=user_filter,
+        page=page,
+        total_pages=total_pages,
+        start=start,
+        end=end,
+        total_rows=total_rows,
+    )
 
 if __name__ == "__main__":
     app.run(debug=True)
