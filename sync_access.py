@@ -166,9 +166,9 @@ def sync(access_path, sqlite_path):
         clean_row = tuple(float(x) if isinstance(x, decimal.Decimal) else x for x in row)
         cur_sql.execute("INSERT INTO delivery VALUES (?,?,?,?,?,?,?,?,?,?,?,?)", clean_row)
 
-    # ==============================
+    # ============================================
     # TABLE matérialisée "impressions_simplifiees"
-    # ==============================
+    # ============================================
     cur_sql.execute("DROP TABLE IF EXISTS impressions_simplifiees")
     cur_sql.execute("""
         CREATE TABLE impressions_simplifiees (
