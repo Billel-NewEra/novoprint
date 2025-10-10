@@ -17,9 +17,6 @@
           <i class="bi bi-people-fill me-2"></i> Clients
         </h5>
         <p class="display-6 fw-bold">{{ total_clients }}</p>
-        <a href="{{ url_for('clients') }}" class="btn btn-client btn-sm">
-          <i class="bi bi-eye text-white me-1"></i> Voir les clients
-        </a>
       </div>
     </div>
   </div>
@@ -37,29 +34,24 @@
         <!-- Statuts alignés -->
         <table class="table table-borderless text-start small mb-3 w-auto mx-auto">
           <tr class="fs-6">
-            <td class="fw-bold text-success">
-              <i class="bi bi-check-circle-fill me-2"></i> Livrées
+            <td class="fw-bold ">
+              <i class="bi me-2"></i> Livrées
             </td>
             <td class="fw-bold">{{ orders_livree }}</td>
           </tr>
           <tr class="fs-6">
-            <td class="fw-bold text-primary">
-              <i class="bi bi-truck me-2"></i> Livraison
+            <td class="fw-bold">
+              <i class="bi me-2"></i> Livraison
             </td>
             <td class="fw-bold">{{ orders_livraison }}</td>
           </tr>
           <tr class="fs-6">
-            <td class="fw-bold text-warning">
-              <i class="bi bi-hourglass-split me-2"></i> En cours
+            <td class="fw-bold">
+              <i class="bi me-2"></i> En cours
             </td>
             <td class="fw-bold">{{ orders_encours }}</td>
           </tr>
         </table>
-
-        <a href="{{ url_for('orders') }}" class="btn btn-order btn-sm">
-          <i class="bi bi-eye text-white me-1"></i>
-          {% if current_user.role == 'admin' %}Voir les commandes{% else %}Voir mes commandes{% endif %}
-        </a>
       </div>
     </div>
   </div>
@@ -73,10 +65,6 @@
           {% if current_user.role == 'admin' %}Livraisons{% else %}Mes livraisons{% endif %}
         </h5>
         <p class="display-6 fw-bold">{{ total_delivery }}</p>
-        <a href="{{ url_for('delivery') }}" class="btn btn-delivery btn-sm">
-          <i class="bi bi-eye text-white me-1"></i>
-          {% if current_user.role == 'admin' %}Voir les livraisons{% else %}Voir mes livraisons{% endif %}
-        </a>
       </div>
     </div>
   </div>
