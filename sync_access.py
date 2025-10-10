@@ -3,10 +3,17 @@ import argparse
 import sqlite3
 import pyodbc
 import decimal  # ✅ Pour gérer les types Decimal retournés par Access
+from ftplib import FTP_TLS
 
-# ⚠️ Mets ici le chemin exact de ta base Access
+# ⚠️Chemin exact de la base Access
 ACCESS_DB = r"C:\Users\benza\OneDrive\Desktop\pal - Copie.accde"
 SQLITE_DB = os.path.join(os.path.dirname(__file__), "instance", "local.sqlite")
+
+# Infos serveur OVH (SFTP)
+SERVER = "mobibenz.com"       # ou l'IP du serveur
+USERNAME = "novoprint"  # ton login cPanel
+PASSWORD = "novoprint1967" # ton mot de passe cPanel
+REMOTE_PATH = "local.sqlite"  # chemin relatif depuis ton home
 
 def sync(access_path, sqlite_path):
     if not os.path.exists(access_path):
@@ -186,15 +193,17 @@ def sync(access_path, sqlite_path):
 
     rows = cur_acc.execute("""
         SELECT 
-            IMPRESSION.NUM_IMPRESSION,
-            IMPRESSION.DATE_IMPRESSION,
-            IMPRESSION.NUM_COMMANDE,
-            IMPRESSION.MACHINE_ID,
-            MAQUETTE.DESCRIPTION,
-            IMPRESSION.LONGUEUR,
-            Int([IMPRESSION]![LONGUEUR]*1000*IIF(ISNULL([MAQUETTE]![OPERCULE]),1,[MAQUETTE]![OPERCULE])/[MAQUETTE]![HAUTEUR]) AS Etiquettes,
-            [IMPRESSION]![LONGUEUR]-[DECOUPE]![LONGUEUR] AS Chutes_ml,
-            UTILISATEUR.NOM
+        IMPRESSION.NUM_IMPRESSION,
+        IMPRESSION.DATE_IMPRESSION,
+        IMPRESSION.NUM_COMMANDE,
+        IMPRESSION.MACHINE_ID,
+        MAQUETTE.DESCRIPTION,
+        IMPRESSION.LONGUEUR,
+        Int([IMPRESSION]![LONGUEUR]*1000*
+            IIF(ISNULL([MAQUETTE]![OPERCULE]),1,[MAQUETTE]![OPERCULE])/
+            [MAQUETTE]![HAUTEUR]) AS Etiquettes,
+        SUM([IMPRESSION]![LONGUEUR]-[DECOUPE]![LONGUEUR]) AS Chutes_ml,
+        UTILISATEUR.NOM
         FROM 
             ((UTILISATEUR 
                 INNER JOIN IMPRESSION 
@@ -203,6 +212,18 @@ def sync(access_path, sqlite_path):
                     ON IMPRESSION.MAQUETTE_ID = MAQUETTE.CODE_MAQUETTE)
                 INNER JOIN DECOUPE 
                     ON IMPRESSION.SN = DECOUPE.SN
+                GROUP BY
+                    IMPRESSION.NUM_IMPRESSION,
+                    IMPRESSION.DATE_IMPRESSION,
+                    IMPRESSION.NUM_COMMANDE,
+                    IMPRESSION.MACHINE_ID,
+                    MAQUETTE.DESCRIPTION,
+                    IMPRESSION.LONGUEUR,
+                    Int([IMPRESSION]![LONGUEUR]*1000*
+                        IIF(ISNULL([MAQUETTE]![OPERCULE]),1,[MAQUETTE]![OPERCULE])/
+                        [MAQUETTE]![HAUTEUR]),
+                    UTILISATEUR.NOM
+        ORDER BY IMPRESSION.NUM_IMPRESSION
     """)
 
     for row in rows:
@@ -223,10 +244,26 @@ def sync(access_path, sqlite_path):
     conn_acc.close()
     print(f"✅ Synchronisation terminée depuis {access_path} vers {sqlite_path}")
 
+def upload_ovh(local_path, remote_path):
+    ftps = FTP_TLS(SERVER)
+    ftps.login(USERNAME+'@'+SERVER, PASSWORD)
+    ftps.prot_p()  # Active la protection des données
+
+    with open(local_path, "rb") as f:
+        ftps.storbinary(f"STOR {remote_path}", f)
+
+    ftps.quit()
+    print("✅ Upload terminé avec FTPS")
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--access", default=ACCESS_DB, help="Chemin du fichier Access (.accdb ou .accde)")
     parser.add_argument("--sqlite", default=SQLITE_DB, help="Chemin du fichier SQLite cible")
+    parser.add_argument("--upload", action="store_true", help="Uploader vers OVH après synchronisation")
     args = parser.parse_args()
     sync(args.access, args.sqlite)
+    # Upload seulement si l'argument --upload est présent
+    if args.upload:
+        upload_ovh(SQLITE_DB, REMOTE_PATH)
+    
