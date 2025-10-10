@@ -1,7 +1,7 @@
 from flask import Flask, render_template, request, redirect, url_for, flash
 import sqlite3
 import calendar
-from datetime import date, datetime, timedelta
+from datetime import date, datetime, timedelta, timezone
 from flask_login import (
     LoginManager, UserMixin, login_user, logout_user,
     login_required, current_user
@@ -60,7 +60,7 @@ def _period_bounds(periode: str, date_exact: str|None, start: str|None, end: str
        - 'custom' => plage
        - autres => bornes calculées
        Renvoie (None, None) si 'all'."""
-    today = date.today()
+    today = datetime.now(timezone.utc).date()
 
     if periode == "all":
         return None, None
@@ -108,7 +108,7 @@ def _period_bounds(periode: str, date_exact: str|None, start: str|None, end: str
 
 def _period_bounds_impression(periode: str, date_start: str|None, date_end: str|None):
     """Retourne (start_iso, end_iso) selon la période choisie pour la page Impression."""
-    today = date.today()
+    today = datetime.now(timezone.utc).date()
 
     if periode == "all":
         return None, None
@@ -316,7 +316,7 @@ def orders():
     count_query = "SELECT COUNT(*) FROM orders WHERE 1=1"
     params, count_params = [], []
 
-    today = datetime.today().date()
+    today = datetime.now(timezone.utc).date()
 
     # Restriction si client connecté
     if current_user.role == "client":
@@ -485,7 +485,7 @@ def delivery():
     count_query = "SELECT COUNT(*) FROM delivery WHERE 1=1"
     params, count_params = [], []
 
-    today = datetime.today().date()
+    today = datetime.now(timezone.utc).date()
 
     if current_user.role == "client":
         query += " AND code_client = ?"
