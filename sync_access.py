@@ -9,12 +9,14 @@ from ftplib import FTP_TLS
 # ⚠️Chemin exact de la base Access
 ACCESS_DB = r"C:\Users\benza\OneDrive\Desktop\pal - Copie.accde"
 SQLITE_DB = os.path.join(os.path.dirname(__file__), "instance", "local.sqlite")
+SQLITE_TMP = os.path.join(os.path.dirname(__file__), "instance", "local_tmp.sqlite")  # ✅ Fichier temporaire local ajouté
 
 # Infos serveur OVH (SFTP)
 SERVER = "mobibenz.com"       # ou l'IP du serveur
 USERNAME = "novoprint"  # ton login cPanel
 PASSWORD = "novoprint1967" # ton mot de passe cPanel
 REMOTE_PATH = "local.sqlite"  # chemin relatif depuis ton home
+REMOTE_TMP_PATH = "local_tmp.sqlite"  # ✅ fichier temporaire distant ajouté
 
 def to_utc_date(value):
     """
@@ -35,6 +37,9 @@ def sync(access_path, sqlite_path):
     if not os.path.exists(access_path):
         raise FileNotFoundError(f"Fichier Access introuvable: {access_path}")
 
+    # ✅ On écrit dans le fichier temporaire au lieu du fichier final
+    target_path = SQLITE_TMP  # <-- modifié ici
+
     # Connexion Access
     conn_acc = pyodbc.connect(
         r"DRIVER={Microsoft Access Driver (*.mdb, *.accdb)};DBQ=" + access_path + ";"
@@ -43,7 +48,7 @@ def sync(access_path, sqlite_path):
 
     # Connexion SQLite
     os.makedirs(os.path.dirname(sqlite_path), exist_ok=True)
-    conn_sql = sqlite3.connect(sqlite_path)
+    conn_sql = sqlite3.connect(target_path)  # <-- modifié ici
     cur_sql = conn_sql.cursor()
 
     # ==============================
@@ -80,7 +85,6 @@ def sync(access_path, sqlite_path):
             total_livre REAL           -- Total livré
         )
     """)
-
     rows = cur_acc.execute("""
         SELECT 
             RESERVATION.NUM_RESERVATION,
@@ -138,7 +142,6 @@ def sync(access_path, sqlite_path):
             produit TEXT              -- Description produit
         )
     """)
-
     rows = cur_acc.execute("""
         SELECT 
             LIVRAISON.NUM_LIVRAISON AS NL,
@@ -210,7 +213,6 @@ def sync(access_path, sqlite_path):
             utilisateur TEXT
         )
     """)
-
     rows = cur_acc.execute("""
         SELECT 
         IMPRESSION.NUM_IMPRESSION,
@@ -245,7 +247,6 @@ def sync(access_path, sqlite_path):
                     UTILISATEUR.NOM
         ORDER BY IMPRESSION.NUM_IMPRESSION
     """)
-
     for row in rows:
         row = list(row)
         row[1] = to_utc_date(row[1])  # 🕓 conversion UTC
@@ -264,19 +265,26 @@ def sync(access_path, sqlite_path):
     conn_sql.commit()
     conn_sql.close()
     conn_acc.close()
-    print(f"✅ Synchronisation terminée depuis {access_path} vers {sqlite_path}")
+    print(f"✅ Synchronisation terminée depuis {access_path} vers {target_path}")
+
+    # ✅ Remplacement atomique du fichier temporaire par le fichier final
+    os.replace(SQLITE_TMP, SQLITE_DB)  # <-- ajouté ici
+    print(f"✅ Remplacement du fichier temporaire terminé : {SQLITE_DB}")
 
 def upload_ovh(local_path, remote_path):
     ftps = FTP_TLS(SERVER)
     ftps.login(USERNAME+'@'+SERVER, PASSWORD)
     ftps.prot_p()  # Active la protection des données
 
+    # ✅ Upload d'abord vers un fichier temporaire distant
     with open(local_path, "rb") as f:
-        ftps.storbinary(f"STOR {remote_path}", f)
+        ftps.storbinary(f"STOR " + REMOTE_TMP_PATH, f)  # <-- modifié ici
+
+    # ✅ Puis rename distant atomique
+    ftps.rename(REMOTE_TMP_PATH, remote_path)  # <-- ajouté ici
 
     ftps.quit()
-    print("✅ Upload terminé avec FTPS")
-
+    print("✅ Upload terminé avec FTPS et renommage distant")
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
@@ -288,4 +296,3 @@ if __name__ == "__main__":
     # Upload seulement si l'argument --upload est présent
     if args.upload:
         upload_ovh(SQLITE_DB, REMOTE_PATH)
-    

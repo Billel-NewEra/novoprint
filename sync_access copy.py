@@ -2,10 +2,34 @@ import os
 import argparse
 import sqlite3
 import pyodbc
+import decimal  # ✅ Pour gérer les types Decimal retournés par Access
+from datetime import datetime, timezone
+from ftplib import FTP_TLS
 
-# ⚠️ Mets ici le chemin exact de ta base Access
+# ⚠️Chemin exact de la base Access
 ACCESS_DB = r"C:\Users\benza\OneDrive\Desktop\pal - Copie.accde"
 SQLITE_DB = os.path.join(os.path.dirname(__file__), "instance", "local.sqlite")
+
+# Infos serveur OVH (SFTP)
+SERVER = "mobibenz.com"       # ou l'IP du serveur
+USERNAME = "novoprint"  # ton login cPanel
+PASSWORD = "novoprint1967" # ton mot de passe cPanel
+REMOTE_PATH = "local.sqlite"  # chemin relatif depuis ton home
+
+def to_utc_date(value):
+    """
+    Convertit une valeur datetime Access en date UTC (YYYY-MM-DD).
+    Si la valeur est None ou vide → retourne None.
+    """
+    if not value:
+        return None
+    s = str(value).strip()
+    if not s:
+        return None
+    # Access renvoie typiquement 'YYYY-MM-DD 00:00:00'
+    dt = datetime.strptime(s, "%Y-%m-%d %H:%M:%S")
+    dt_utc = dt.replace(tzinfo=timezone.utc)
+    return dt_utc.date().isoformat()
 
 def sync(access_path, sqlite_path):
     if not os.path.exists(access_path):
@@ -46,25 +70,28 @@ def sync(access_path, sqlite_path):
     cur_sql.execute("""
         CREATE TABLE orders (
             num_reservation INTEGER,   -- N Cmnd
+            cmdl TEXT,
             client TEXT,               -- Client
             produit TEXT,              -- Produit
             qte INTEGER,               -- Cmnde
+            date_reservation TXT,      -- Date
             situation TEXT,            -- Situation
-            reste REAL                 -- Reste
+            reste REAL,                -- Reste
+            total_livre REAL           -- Total livré
         )
     """)
 
-    # ==============================
-    # Exécution de la requête Access (Nz() -> IIF(ISNULL(...),...,...))
-    # ==============================
     rows = cur_acc.execute("""
         SELECT 
             RESERVATION.NUM_RESERVATION,
+            RESERVATION.NUM_COMMANDE,
             CLIENT.ENTREPRISE,
             MAQUETTE.DESCRIPTION,
             RESERVATION_TABLE.QTE,
+            RESERVATION.DATE_RESERVATION,
             RESERVATION.SITUATION,
-            RESERVATION_TABLE.QTE - IIF(ISNULL(Total_livre_cmd.QT),0,Total_livre_cmd.QT) AS Reste
+            RESERVATION_TABLE.QTE - IIF(ISNULL(Total_livre_cmd.QT),0,Total_livre_cmd.QT) AS Reste,
+            IIF(ISNULL(Total_livre_cmd.QT),0,Total_livre_cmd.QT) AS Total_livre
         FROM 
             (CLIENT 
                 INNER JOIN (
@@ -86,11 +113,150 @@ def sync(access_path, sqlite_path):
             ) 
             ON RESERVATION.NUM_RESERVATION = RESERVATION_TABLE.NUM_RESERVATION
     """)
+    for row in rows:
+        row = list(row)
+        row[5] = to_utc_date(row[5])  # 🕓 conversion UTC
+        cur_sql.execute("INSERT INTO orders VALUES (?,?,?,?,?,?,?,?,?)", row)
+
+    # ==============================
+    # TABLE matérialisée "delivery"
+    # ==============================
+    cur_sql.execute("DROP TABLE IF EXISTS delivery")
+    cur_sql.execute("""
+        CREATE TABLE delivery (
+            nl INTEGER,               -- Numéro de livraison
+            code_client INTEGER,      -- Code client
+            client TEXT,              -- Nom du client
+            qte INTEGER,              -- Quantité livrée
+            montant REAL,             -- Montant total
+            num_reservation INTEGER,  -- Numéro réservation
+            utilisateur TEXT,         -- Utilisateur
+            date_livraison TEXT,      -- Date de livraison
+            facture TEXT,             -- Facture
+            num_livraison INTEGER,    -- Numéro livraison (bis)
+            observation TEXT,         -- Observation
+            produit TEXT              -- Description produit
+        )
+    """)
+
+    rows = cur_acc.execute("""
+        SELECT 
+            LIVRAISON.NUM_LIVRAISON AS NL,
+            RESERVATION.CODE_CLIENT,
+            CLIENT.ENTREPRISE,
+            LIVRAISON_TABLE.QTE,
+            SUM(LIVRAISON_TABLE.PRIX_GROS * LIVRAISON_TABLE.QTE) AS MONTANT,
+            LIVRAISON.NUM_RESERVATION,
+            UTILISATEUR.NOM,
+            LIVRAISON.DATE_LIVRAISON,
+            LIVRAISON.FACTURE,
+            LIVRAISON.NUM_LIVRAISON,
+            LIVRAISON.OBSERVATION,
+            MAQUETTE.DESCRIPTION
+        FROM 
+            UTILISATEUR 
+            INNER JOIN (
+                (CLIENT 
+                    INNER JOIN RESERVATION 
+                        ON CLIENT.NUM_CLIENT = RESERVATION.CODE_CLIENT
+                ) 
+                INNER JOIN (
+                    LIVRAISON 
+                    INNER JOIN (
+                        LIVRAISON_TABLE 
+                        INNER JOIN MAQUETTE 
+                            ON LIVRAISON_TABLE.CODE_PIECE = MAQUETTE.CODE_MAQUETTE
+                    ) 
+                    ON LIVRAISON.NUM_LIVRAISON = LIVRAISON_TABLE.NUM_LIVRAISON
+                ) 
+                ON RESERVATION.NUM_RESERVATION = LIVRAISON.NUM_RESERVATION
+            ) 
+            ON UTILISATEUR.[N°] = LIVRAISON.NUM_UTILISATEUR
+        GROUP BY 
+            RESERVATION.CODE_CLIENT, 
+            CLIENT.ENTREPRISE, 
+            LIVRAISON_TABLE.QTE, 
+            LIVRAISON.NUM_RESERVATION, 
+            UTILISATEUR.NOM, 
+            LIVRAISON.DATE_LIVRAISON, 
+            LIVRAISON.FACTURE, 
+            LIVRAISON.NUM_LIVRAISON, 
+            LIVRAISON.OBSERVATION, 
+            MAQUETTE.DESCRIPTION, 
+            LIVRAISON.NUM_LIVRAISON
+        ORDER BY LIVRAISON.NUM_LIVRAISON
+    """)
+    for row in rows:
+        row = list(row)
+        row[7] = to_utc_date(row[7])  # 🕓 conversion UTC
+        # ✅ Conversion Decimal → float
+        clean_row = tuple(float(x) if isinstance(x, decimal.Decimal) else x for x in row)
+        cur_sql.execute("INSERT INTO delivery VALUES (?,?,?,?,?,?,?,?,?,?,?,?)", clean_row)
+
+    # ============================================
+    # TABLE matérialisée "impressions_simplifiees"
+    # ============================================
+    cur_sql.execute("DROP TABLE IF EXISTS impressions_simplifiees")
+    cur_sql.execute("""
+        CREATE TABLE impressions_simplifiees (
+            tirage TEXT,
+            date_impression TEXT,
+            commande TEXT,
+            machine TEXT,
+            article TEXT,
+            longueur REAL,
+            etiquettes INTEGER,
+            chutes_ml REAL,
+            utilisateur TEXT
+        )
+    """)
+
+    rows = cur_acc.execute("""
+        SELECT 
+        IMPRESSION.NUM_IMPRESSION,
+        IMPRESSION.DATE_IMPRESSION,
+        IMPRESSION.NUM_COMMANDE,
+        IMPRESSION.MACHINE_ID,
+        MAQUETTE.DESCRIPTION,
+        IMPRESSION.LONGUEUR,
+        Int([IMPRESSION]![LONGUEUR]*1000*
+            IIF(ISNULL([MAQUETTE]![OPERCULE]),1,[MAQUETTE]![OPERCULE])/
+            [MAQUETTE]![HAUTEUR]) AS Etiquettes,
+        SUM([IMPRESSION]![LONGUEUR]-[DECOUPE]![LONGUEUR]) AS Chutes_ml,
+        UTILISATEUR.NOM
+        FROM 
+            ((UTILISATEUR 
+                INNER JOIN IMPRESSION 
+                    ON UTILISATEUR.[N°] = IMPRESSION.USER_ID)
+                INNER JOIN MAQUETTE 
+                    ON IMPRESSION.MAQUETTE_ID = MAQUETTE.CODE_MAQUETTE)
+                INNER JOIN DECOUPE 
+                    ON IMPRESSION.SN = DECOUPE.SN
+                GROUP BY
+                    IMPRESSION.NUM_IMPRESSION,
+                    IMPRESSION.DATE_IMPRESSION,
+                    IMPRESSION.NUM_COMMANDE,
+                    IMPRESSION.MACHINE_ID,
+                    MAQUETTE.DESCRIPTION,
+                    IMPRESSION.LONGUEUR,
+                    Int([IMPRESSION]![LONGUEUR]*1000*
+                        IIF(ISNULL([MAQUETTE]![OPERCULE]),1,[MAQUETTE]![OPERCULE])/
+                        [MAQUETTE]![HAUTEUR]),
+                    UTILISATEUR.NOM
+        ORDER BY IMPRESSION.NUM_IMPRESSION
+    """)
 
     for row in rows:
+        row = list(row)
+        row[1] = to_utc_date(row[1])  # 🕓 conversion UTC
+        clean_row = tuple(float(x) if isinstance(x, decimal.Decimal) else x for x in row)
         cur_sql.execute("""
-            INSERT INTO orders VALUES (?,?,?,?,?,?)
-        """, row)
+            INSERT INTO impressions_simplifiees 
+            (tirage, date_impression, commande, machine, article, longueur, etiquettes, chutes_ml, utilisateur)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+        """, clean_row)
+
+    print("✅ Table 'impressions_simplifiees' synchronized successfully.")
 
     # ==============================
     # COMMIT & CLOSE
@@ -100,10 +266,26 @@ def sync(access_path, sqlite_path):
     conn_acc.close()
     print(f"✅ Synchronisation terminée depuis {access_path} vers {sqlite_path}")
 
+def upload_ovh(local_path, remote_path):
+    ftps = FTP_TLS(SERVER)
+    ftps.login(USERNAME+'@'+SERVER, PASSWORD)
+    ftps.prot_p()  # Active la protection des données
+
+    with open(local_path, "rb") as f:
+        ftps.storbinary(f"STOR {remote_path}", f)
+
+    ftps.quit()
+    print("✅ Upload terminé avec FTPS")
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--access", default=ACCESS_DB, help="Chemin du fichier Access (.accdb ou .accde)")
     parser.add_argument("--sqlite", default=SQLITE_DB, help="Chemin du fichier SQLite cible")
+    parser.add_argument("--upload", action="store_true", help="Uploader vers OVH après synchronisation")
     args = parser.parse_args()
     sync(args.access, args.sqlite)
+    # Upload seulement si l'argument --upload est présent
+    if args.upload:
+        upload_ovh(SQLITE_DB, REMOTE_PATH)
+    
