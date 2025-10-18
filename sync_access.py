@@ -18,9 +18,9 @@ PASSWORD = "novoprint1967" # ton mot de passe cPanel
 REMOTE_PATH = "local.sqlite"  # chemin relatif depuis ton home
 REMOTE_TMP_PATH = "local_tmp.sqlite"  # ✅ fichier temporaire distant ajouté
 
-def to_utc_date(value):
+def to_utc_datetime(value):
     """
-    Convertit une valeur datetime Access en date UTC (YYYY-MM-DD).
+    Convertit une valeur datetime Access en texte UTC (YYYY-MM-DD HH:MM:SS).
     Si la valeur est None ou vide → retourne None.
     """
     if not value:
@@ -28,10 +28,9 @@ def to_utc_date(value):
     s = str(value).strip()
     if not s:
         return None
-    # Access renvoie typiquement 'YYYY-MM-DD 00:00:00'
     dt = datetime.strptime(s, "%Y-%m-%d %H:%M:%S")
     dt_utc = dt.replace(tzinfo=timezone.utc)
-    return dt_utc.date().isoformat()
+    return dt_utc.strftime("%Y-%m-%d %H:%M:%S")
 
 def sync(access_path, sqlite_path):
     if not os.path.exists(access_path):
@@ -119,7 +118,7 @@ def sync(access_path, sqlite_path):
     """)
     for row in rows:
         row = list(row)
-        row[5] = to_utc_date(row[5])  # 🕓 conversion UTC
+        row[5] = to_utc_datetime(row[5])  # 🕓 conversion UTC
         cur_sql.execute("INSERT INTO orders VALUES (?,?,?,?,?,?,?,?,?)", row)
 
     # ==============================
@@ -191,7 +190,7 @@ def sync(access_path, sqlite_path):
     """)
     for row in rows:
         row = list(row)
-        row[7] = to_utc_date(row[7])  # 🕓 conversion UTC
+        row[7] = to_utc_datetime(row[7])  # 🕓 conversion UTC
         # ✅ Conversion Decimal → float
         clean_row = tuple(float(x) if isinstance(x, decimal.Decimal) else x for x in row)
         cur_sql.execute("INSERT INTO delivery VALUES (?,?,?,?,?,?,?,?,?,?,?,?)", clean_row)
@@ -249,7 +248,7 @@ def sync(access_path, sqlite_path):
     """)
     for row in rows:
         row = list(row)
-        row[1] = to_utc_date(row[1])  # 🕓 conversion UTC
+        row[1] = to_utc_datetime(row[1])  # 🕓 conversion UTC
         clean_row = tuple(float(x) if isinstance(x, decimal.Decimal) else x for x in row)
         cur_sql.execute("""
             INSERT INTO impressions_simplifiees 
