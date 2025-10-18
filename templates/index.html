@@ -11,7 +11,7 @@
   <!-- Clients (admin uniquement) --> 
   {% if current_user.role == 'admin' %}
   <div class="col-md-4">
-    <div class="card text-center shadow-sm border-client">
+    <div class="card text-center shadow-sm border-client chart-card">
       <div class="card-body d-flex flex-column justify-content-between">
         <div>
           <h5 class="card-title text-client">
@@ -29,7 +29,7 @@
 
   <!-- Commandes -->
   <div class="col-md-4">
-    <div class="card text-center shadow-sm border-info">
+    <div class="card text-center shadow-sm border-info chart-card">
       <div class="card-body d-flex flex-column justify-content-between">
         <div>
           <h5 class="card-title text-info">
@@ -62,7 +62,7 @@
 
   <!-- Livraisons -->
   <div class="col-md-4">
-    <div class="card text-center shadow-sm border-success">
+    <div class="card text-center shadow-sm border-success chart-card">
       <div class="card-body d-flex flex-column justify-content-between">
         <div>
           <h5 class="card-title text-success">
@@ -81,7 +81,7 @@
   {% if current_user.role == 'admin' %}
   <!-- Impressions -->
   <div class="col-md-4">
-    <div class="card text-center shadow-sm border-impression">
+    <div class="card text-center shadow-sm border-impression chart-card">
       <div class="card-body d-flex flex-column justify-content-between">
         <div>
           <h5 class="card-title text-impression">

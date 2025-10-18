@@ -272,7 +272,7 @@ footer .brand-signature.glow-once {
   transition: all 0.3s ease;
   box-shadow: 0 2px 6px rgba(0,0,0,0.05);
 }
-.card:hover {
+.chart-card:hover {
   transform: translateY(-3px);
   box-shadow: 0 4px 14px rgba(0,0,0,0.1);
 }
