@@ -91,6 +91,13 @@
       -webkit-text-fill-color: transparent;
       animation: gradientFlow 6s linear infinite, pulseGlow 2.5s ease-in-out infinite alternate;
       text-shadow: 0 0 10px rgba(255,255,255,0.6), 0 0 20px rgba(3,169,244,0.5);
+      transition: transform 0.4s ease, text-shadow 0.4s ease;
+      cursor: default;
+    }
+
+    footer:hover {
+      transform: scale(1.1);
+      text-shadow: 0 0 20px rgba(255,255,255,0.9), 0 0 45px rgba(3,169,244,0.9);
     }
 
     @keyframes gradientFlow {
@@ -114,10 +121,10 @@
   <div id="content">
     <h1>Bienvenue sur la plateforme</h1>
 
-    <img src="{{ url_for('static', filename='img/logo.png') }}" alt="Logo Novoprint">
+    <img src="{{ url_for('static', filename='icons/logo.png') }}" alt="Logo Novoprint">
 
     <p>
-      Connectez-vous pour suivre vos <strong>commandes</strong>, vos <strong>livraisons</strong> et vos <strong>impressions</strong>.
+      Connectez-vous pour suivre vos <strong>commandes</strong> et vos <strong>livraisons</strong>.
     </p>
 
     <a href="{{ url_for('login') }}">Se connecter</a>
