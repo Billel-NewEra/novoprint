@@ -223,6 +223,10 @@ def index():
         orders_encours = conn.execute("SELECT COUNT(*) FROM orders WHERE situation = 'EN COURS'").fetchone()[0]
         orders_livraison = conn.execute("SELECT COUNT(*) FROM orders WHERE situation = 'LIVRAISON'").fetchone()[0]
         total_delivery = conn.execute("SELECT COUNT(*) FROM delivery").fetchone()[0]
+        # Comptage impressions
+        total_impressions = conn.execute(
+            "SELECT COUNT(*) FROM impressions_simplifiees"
+        ).fetchone()[0]
     else:
         # Vue client → totaux spécifiques à son entreprise
         client = conn.execute("SELECT Entreprise FROM client WHERE N = ?", (current_user.client_id,)).fetchone()
@@ -242,6 +246,7 @@ def index():
             orders_encours = 0
             orders_livraison = 0
             total_delivery = 0
+            total_impressions = 0
 
     conn.close()
 
@@ -252,7 +257,8 @@ def index():
         total_delivery=total_delivery,
         orders_livree=orders_livree,
         orders_encours=orders_encours,
-        orders_livraison=orders_livraison
+        orders_livraison=orders_livraison,
+        total_impressions=total_impressions
     )
 
 # ---- Clients (pagination) ----

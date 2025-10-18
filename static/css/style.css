@@ -266,7 +266,146 @@ footer .brand-signature.glow-once {
   margin-top: 0.1rem;
 }
 
-/* * {
-  outline: 1px solid red; /* Debug */
-/* }
+/* === Cartes === */
+.card {
+  border-radius: 12px;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+}
+.card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 4px 14px rgba(0,0,0,0.1);
+}
 
+/* === Barre verticale colorée discrète === */
+.border-client {
+  border-left: 4px solid #0d6efd;
+}
+.border-info {
+  border-left: 4px solid #0dcaf0;
+}
+.border-success {
+  border-left: 4px solid #198754;
+}
+
+/* === Tableau de statuts (Commandes) === */
+.stats-table {
+  background: transparent;
+  border-collapse: separate;
+  border-spacing: 0 4px;
+}
+.stats-table td {
+  padding: 6px 10px;
+  background: transparent;
+  font-size: 0.95rem;
+}
+.stats-table i {
+  font-size: 1rem;
+  vertical-align: middle;
+  opacity: 0.9;
+}
+
+/* couleurs icônes */
+.icon-livree { color: #28a745; }
+.icon-livraison { color: #0dcaf0; }
+.icon-encours { color: #ffc107; }
+
+/* effet hover léger sur les lignes */
+.stats-table tr:hover td {
+  background-color: rgba(0, 0, 0, 0.03);
+  border-radius: 6px;
+  transition: background-color 0.2s ease;
+}
+
+/* === Boutons dashboard === */
+.btn-client,
+.btn-info,
+.btn-success {
+  font-size: 0.85rem;
+  font-weight: 500;
+  border-radius: 8px;
+  transition: all 0.25s ease;
+}
+
+.btn-info:hover {
+  background-color: #0bb8d7;
+}
+.btn-success:hover {
+  background-color: #146c43;
+}
+
+/* Effet lumière au survol des boutons */
+.btn-client,
+.btn-info,
+.btn-success {
+  position: relative;
+  overflow: hidden;
+}
+.btn-client::before,
+.btn-info::before,
+.btn-success::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: -80px;
+  width: 50px;
+  height: 100%;
+  background: rgba(255, 255, 255, 0.3);
+  transform: skewX(-20deg);
+  transition: left 0.4s ease;
+}
+.btn-client:hover::before,
+.btn-info:hover::before,
+.btn-success:hover::before {
+  left: 120%;
+}
+
+/* === Chiffres bien lisibles === */
+.display-6 {
+  color: #212529;
+  font-weight: 700;
+}
+
+/* === Impression = Violet === */
+.border-impression {
+  border-left: 4px solid #6f42c1; /* Violet indigo */
+}
+
+.btn-impression {
+  background-color: #6f42c1;
+  color: white;
+  border: none;
+  font-size: 0.85rem;
+  font-weight: 500;
+  border-radius: 8px;
+  transition: all 0.25s ease;
+}
+
+.btn-impression:hover {
+  background-color: #5a32a3; /* plus foncé au survol */
+}
+
+/* effet lumière */
+.btn-impression {
+  position: relative;
+  overflow: hidden;
+  color: white !important;
+}
+.btn-impression::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: -80px;
+  width: 50px;
+  height: 100%;
+  background: rgba(255, 255, 255, 0.3);
+  transform: skewX(-20deg);
+  transition: left 0.4s ease;
+}
+.btn-impression:hover::before {
+  left: 120%;
+}
+
+.text-impression {
+  color: #6f42c1 !important;
+}
