@@ -96,7 +96,7 @@
             {% endif %}
             <td>{{ o.produit }}</td>
             <td>{{ o.qte }}</td>
-            <td>{{ o.date_reservation[:10] }}</td>
+            <td>{{ o.date_reservation[:16] }}</td>
             <td>
   {% if o.situation == "LIVREE" %}
     <span class="badge bg-success">{{ o.situation }}</span>
