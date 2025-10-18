@@ -79,22 +79,22 @@
   </div>
 
   {% if current_user.role == 'admin' %}
-<!-- Impressions -->
-<div class="col-md-4">
-  <div class="card text-center shadow-sm border-impression">
-    <div class="card-body d-flex flex-column justify-content-between">
-      <div>
-        <h5 class="card-title text-impression">
-          <i class="bi bi-printer-fill me-2"></i> Impressions
-        </h5>
-        <p class="display-6 fw-bold text-dark">{{ total_impressions }}</p>
+  <!-- Impressions -->
+  <div class="col-md-4">
+    <div class="card text-center shadow-sm border-impression">
+      <div class="card-body d-flex flex-column justify-content-between">
+        <div>
+          <h5 class="card-title text-impression">
+            <i class="bi bi-printer-fill me-2"></i> Impressions
+          </h5>
+          <p class="display-6 fw-bold text-dark">{{ total_impressions }}</p>
+        </div>
+        <a href="{{ url_for('impression') }}" class="btn btn-sm btn-impression mt-2">
+          <i class="bi bi-eye me-1"></i> Voir les impressions
+        </a>
       </div>
-      <a href="{{ url_for('impression') }}" class="btn btn-sm btn-impression mt-2">
-        <i class="bi bi-eye me-1"></i> Voir les impressions
-      </a>
     </div>
   </div>
-</div>
   {% endif %}
 </div>
 

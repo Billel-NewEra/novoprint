@@ -235,7 +235,6 @@ def inject_client_name():
 @login_required
 def index():
     conn = get_db_connection()
-    total_impressions = 0
 
     # Vue admin → totaux globaux
     if current_user.role == "admin":
