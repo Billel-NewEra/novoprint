@@ -77,6 +77,8 @@
       </div>
     </div>
   </div>
+
+  {% if current_user.role == 'admin' %}
 <!-- Impressions -->
 <div class="col-md-4">
   <div class="card text-center shadow-sm border-impression">
@@ -93,6 +95,7 @@
     </div>
   </div>
 </div>
+  {% endif %}
 </div>
 
 {% endblock %}

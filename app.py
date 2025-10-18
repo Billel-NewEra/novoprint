@@ -12,6 +12,27 @@ from werkzeug.security import check_password_hash
 app = Flask(__name__)
 app.secret_key = "change_this_to_a_real_secret_key"
 
+# ============================
+#   FILTRE JINJA - Format Date
+# ============================
+@app.template_filter('datetime_format')
+def datetime_format(value):
+    """Convertit une date ISO (YYYY-MM-DD ou YYYY-MM-DD HH:MM:SS) 
+    en JJ-MM-YYYY pour l'affichage."""
+    if not value:
+        return ""
+    try:
+        # Cas avec heure
+        dt = datetime.strptime(value, "%Y-%m-%d %H:%M:%S")
+        return dt.strftime("%d-%m-%Y %H:%M:%S")
+    except ValueError:
+        try:
+            # Cas sans heure
+            dt = datetime.strptime(value, "%Y-%m-%d")
+            return dt.strftime("%d-%m-%Y")
+        except ValueError:
+            return value
+
 # --- Flask-Login config ---
 login_manager = LoginManager()
 login_manager.init_app(app)
@@ -239,6 +260,7 @@ def index():
             orders_encours = conn.execute("SELECT COUNT(*) FROM orders WHERE client = ? AND situation = 'EN COURS'", (client_name,)).fetchone()[0]
             orders_livraison = conn.execute("SELECT COUNT(*) FROM orders WHERE client = ? AND situation = 'LIVRAISON'", (client_name,)).fetchone()[0]
             total_delivery = conn.execute("SELECT COUNT(*) FROM delivery WHERE client = ?", (client_name,)).fetchone()[0]
+            total_impressions = 0
         else:
             total_clients = 0
             total_orders = 0
