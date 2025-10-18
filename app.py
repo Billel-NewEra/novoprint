@@ -230,8 +230,12 @@ def inject_client_name():
 #   ROUTES PRINCIPALES
 # ============================
 
-# ---- Dashboard ----
 @app.route("/")
+def home():
+    return render_template("home.html")
+
+# ---- Dashboard ----
+@app.route("/index")
 @login_required
 def index():
     conn = get_db_connection()

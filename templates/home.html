@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Bienvenue - Novoprint</title>
+  <style>
+    body {
+      margin: 0;
+      overflow: hidden;
+      font-family: sans-serif;
+    }
+
+    /* === Fond Canvas === */
+    canvas#bg {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: -1;
+    }
+
+    /* === Contenu principal === */
+    #content {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      text-align: center;
+      color: white;
+    }
+
+    #content h1 {
+      font-size: 2.5rem;
+      margin-bottom: 20px;
+      opacity: 0;
+      transform: translateY(30px);
+      transition: all 1s ease;
+    }
+
+    #content img {
+      width: 200px;
+      margin-bottom: 20px;
+      opacity: 0;
+      transform: translateY(30px);
+      transition: all 1s ease;
+      filter: drop-shadow(0 0 12px rgba(255, 255, 255, 0.6))
+              drop-shadow(0 0 25px rgba(255, 255, 255, 0.4));
+    }
+
+    #content p {
+      font-size: 1.1rem;
+      margin-bottom: 25px;
+      opacity: 0;
+      transform: translateY(30px);
+      transition: all 1s ease;
+    }
+
+    #content a {
+      display: inline-block;
+      background: white;
+      color: #0288d1;
+      padding: 12px 30px;
+      text-decoration: none;
+      font-weight: bold;
+      border-radius: 50px;
+      transition: all 0.3s;
+      opacity: 0;
+      transform: translateY(30px);
+    }
+
+    #content a:hover {
+      background: #0288d1;
+      color: white;
+      box-shadow: 0 0 15px rgba(255, 255, 255, 0.7);
+      transform: scale(1.05);
+    }
+
+    /* === Footer attractif === */
+    footer {
+      position: absolute;
+      bottom: 15px;
+      width: 100%;
+      text-align: center;
+      font-size: 1rem;
+      font-weight: 600;
+      background: linear-gradient(90deg, #fff, #b3e5fc, #0288d1, #fff);
+      background-size: 300% auto;
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      animation: gradientFlow 6s linear infinite, pulseGlow 2.5s ease-in-out infinite alternate;
+      text-shadow: 0 0 10px rgba(255,255,255,0.6), 0 0 20px rgba(3,169,244,0.5);
+    }
+
+    @keyframes gradientFlow {
+      0% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
+    }
+
+    @keyframes pulseGlow {
+      0% { text-shadow: 0 0 10px rgba(255,255,255,0.7), 0 0 25px rgba(2,136,209,0.8); }
+      100% { text-shadow: 0 0 20px rgba(255,255,255,1), 0 0 40px rgba(2,136,209,1); }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Canvas de fond animé -->
+  <canvas id="bg"></canvas>
+
+  <!-- Contenu centré -->
+  <div id="content">
+    <h1>Bienvenue sur la plateforme</h1>
+
+    <img src="{{ url_for('static', filename='img/logo.png') }}" alt="Logo Novoprint">
+
+    <p>
+      Connectez-vous pour suivre vos <strong>commandes</strong>, vos <strong>livraisons</strong> et vos <strong>impressions</strong>.
+    </p>
+
+    <a href="{{ url_for('login') }}">Se connecter</a>
+  </div>
+
+  <!-- Footer -->
+  <footer>
+    © 2025 Powered by MobiPrint
+  </footer>
+
+  <script>
+    // === Animation du logo flottant ===
+    const logo = document.querySelector('#content img');
+    let t = 0;
+    setInterval(() => {
+      t += 0.05;
+      logo.style.transform = `translateY(${Math.sin(t) * 10}px)`;
+    }, 30);
+
+    // === Apparition séquentielle du contenu ===
+    const elements = document.querySelectorAll('#content h1, #content img, #content p, #content a');
+    elements.forEach((el, i) => {
+      setTimeout(() => {
+        el.style.opacity = '1';
+        el.style.transform = 'translateY(0)';
+      }, 500 + i * 400);
+    });
+
+    // === Canvas animation bulles ===
+    const canvas = document.getElementById('bg');
+    const ctx = canvas.getContext('2d');
+    let W, H;
+
+    function resize() {
+      W = canvas.width = window.innerWidth;
+      H = canvas.height = window.innerHeight;
+    }
+    window.addEventListener('resize', resize);
+    resize();
+
+    const bubbles = [];
+    for (let i = 0; i < 60; i++) {
+      bubbles.push({
+        x: Math.random() * W,
+        y: Math.random() * H,
+        r: Math.random() * 25 + 5,
+        s: Math.random() * 0.8 + 0.2,
+        drift: (Math.random() - 0.5) * 0.5,
+        alpha: Math.random() * 0.5 + 0.3
+      });
+    }
+
+    function animate() {
+      ctx.clearRect(0, 0, W, H);
+      const gradient = ctx.createLinearGradient(0, 0, 0, H);
+      gradient.addColorStop(0, '#b3e5fc');
+      gradient.addColorStop(1, '#0288d1');
+      ctx.fillStyle = gradient;
+      ctx.fillRect(0, 0, W, H);
+
+      for (const b of bubbles) {
+        b.y -= b.s;
+        b.x += b.drift;
+        if (b.y + b.r < 0) {
+          b.y = H + b.r;
+          b.x = Math.random() * W;
+        }
+
+        ctx.beginPath();
+        ctx.arc(b.x, b.y, b.r, 0, Math.PI * 2);
+        ctx.strokeStyle = `rgba(255, 255, 255, ${b.alpha})`;
+        ctx.lineWidth = 1.5;
+        ctx.stroke();
+      }
+
+      requestAnimationFrame(animate);
+    }
+
+    animate();
+  </script>
+
+</body>
+</html>
