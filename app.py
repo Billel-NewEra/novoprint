@@ -234,13 +234,13 @@ def inject_client_name():
 #   ROUTES PRINCIPALES
 # ============================
 
-@app.route('/manifest.json')
-def manifest():
-    return send_from_directory(static_folder, 'manifest.json', mimetype='application/json')
+# @app.route('/manifest.json')
+# def manifest():
+#     return send_from_directory(static_folder, 'manifest.json', mimetype='application/json')
 
-@app.route('/service-worker.js')
-def sw():
-    return send_from_directory(static_folder, 'service-worker.js', mimetype='application/javascript')
+# @app.route('/service-worker.js')
+# def sw():
+#     return send_from_directory(static_folder, 'service-worker.js', mimetype='application/javascript')
 
 @app.route("/")
 def home():
