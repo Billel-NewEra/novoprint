@@ -232,11 +232,11 @@ def inject_client_name():
 
 @app.route('/manifest.json')
 def manifest():
-    return send_from_directory('static', 'manifest.json')
+    return send_from_directory('static', 'manifest.json', mimetype='application/json')
 
 @app.route('/service-worker.js')
 def sw():
-    return send_from_directory('static', 'service-worker.js')
+    return send_from_directory('static', 'service-worker.js', mimetype='application/javascript')
 
 @app.route("/")
 def home():

@@ -26,12 +26,15 @@
     </style>
   </head>
   <script>
-  if ("serviceWorker" in navigator) {
-    navigator.serviceWorker.register("{{ url_for('static', filename='service-worker.js') }}")
-    .then(reg => console.log("Service Worker registered", reg))
-    .catch(err => console.log("SW registration failed", err));
-  }
-  </script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker
+          .register('/service-worker.js', { scope: '/' })
+          .then(reg => console.log('✅ SW enregistré avec le scope:', reg.scope))
+          .catch(err => console.error('❌ SW échec:', err));
+      });
+    }
+</script>
   <body>
 
     <!-- Navbar -->
