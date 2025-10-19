@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, redirect, url_for, flash
+from flask import Flask, render_template, request, redirect, url_for, flash, send_from_directory
 import sqlite3
 import calendar
 from datetime import date, datetime, timedelta, timezone
@@ -229,6 +229,14 @@ def inject_client_name():
 # ============================
 #   ROUTES PRINCIPALES
 # ============================
+
+@app.route('/manifest.json')
+def manifest():
+    return send_from_directory('static', 'manifest.json')
+
+@app.route('/service-worker.js')
+def sw():
+    return send_from_directory('static/js', 'service-worker.js')
 
 @app.route("/")
 def home():

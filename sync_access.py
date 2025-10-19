@@ -12,8 +12,8 @@ SQLITE_DB = os.path.join(os.path.dirname(__file__), "instance", "local.sqlite")
 SQLITE_TMP = os.path.join(os.path.dirname(__file__), "instance", "local_tmp.sqlite")  # ✅ Fichier temporaire local ajouté
 
 # Infos serveur OVH (SFTP)
-SERVER = "mobibenz.com"       # ou l'IP du serveur
-USERNAME = "novoprint"  # ton login cPanel
+SERVER = "novoprint.dz"       # ou l'IP du serveur
+USERNAME = "novoprintftp"  # ton login cPanel
 PASSWORD = "novoprint1967" # ton mot de passe cPanel
 REMOTE_PATH = "local.sqlite"  # chemin relatif depuis ton home
 REMOTE_TMP_PATH = "local_tmp.sqlite"  # ✅ fichier temporaire distant ajouté

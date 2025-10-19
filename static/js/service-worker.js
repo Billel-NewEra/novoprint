@@ -1,10 +1,10 @@
 const CACHE_NAME = "novoprint-cache-v1";
 const urlsToCache = [
-  "/novoprint/",
-  "/novoprint/static/css/style.css",
-  "/novoprint/static/js/app.js",
-  "/novoprint/static/icons/novoprint_icon_192.png",
-  "/novoprint/static/icons/novoprint_icon_512.png"
+  "/",
+  "/static/css/style.css",
+  "/static/js/app.js",
+  "/static/icons/novoprint_icon_192.png",
+  "/static/icons/novoprint_icon_512.png"
 ];
 
 // Install SW
