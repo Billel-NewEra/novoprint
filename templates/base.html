@@ -27,7 +27,7 @@
   </head>
   <script>
   if ("serviceWorker" in navigator) {
-    navigator.serviceWorker.register("{{ url_for('static', filename='js/service-worker.js') }}")
+    navigator.serviceWorker.register("{{ url_for('static', filename='service-worker.js') }}")
     .then(reg => console.log("Service Worker registered", reg))
     .catch(err => console.log("SW registration failed", err));
   }

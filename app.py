@@ -236,7 +236,7 @@ def manifest():
 
 @app.route('/service-worker.js')
 def sw():
-    return send_from_directory('static/js', 'service-worker.js')
+    return send_from_directory('static', 'service-worker.js')
 
 @app.route("/")
 def home():
