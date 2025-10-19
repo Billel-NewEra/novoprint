@@ -8,9 +8,13 @@ from flask_login import (
 )
 from werkzeug.security import generate_password_hash
 from werkzeug.security import check_password_hash
+import os
 
 app = Flask(__name__)
 app.secret_key = "change_this_to_a_real_secret_key"
+
+# chemin absolu vers ton vrai dossier static
+static_folder = os.path.join(os.path.dirname(__file__), 'static')
 
 # ============================
 #   FILTRE JINJA - Format Date
@@ -232,11 +236,11 @@ def inject_client_name():
 
 @app.route('/manifest.json')
 def manifest():
-    return send_from_directory('static', 'manifest.json', mimetype='application/json')
+    return send_from_directory(static_folder, 'manifest.json', mimetype='application/json')
 
 @app.route('/service-worker.js')
 def sw():
-    return send_from_directory('static', 'service-worker.js', mimetype='application/javascript')
+    return send_from_directory(static_folder, 'service-worker.js', mimetype='application/javascript')
 
 @app.route("/")
 def home():

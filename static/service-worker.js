@@ -1,22 +1,24 @@
 const CACHE_NAME = "novoprint-cache-v1";
 const urlsToCache = [
-  "/",
+  "/", 
   "/static/css/style.css",
-  "/static/js/app.js",
   "/static/icons/novoprint_icon_192.png",
   "/static/icons/novoprint_icon_512.png"
 ];
 
-// Install SW
 self.addEventListener("install", event => {
   event.waitUntil(
     caches.open(CACHE_NAME).then(cache => {
       return cache.addAll(urlsToCache);
     })
   );
+  self.skipWaiting();
 });
 
-// Fetch from cache
+self.addEventListener("activate", event => {
+  event.waitUntil(self.clients.claim());
+});
+
 self.addEventListener("fetch", event => {
   event.respondWith(
     caches.match(event.request).then(response => {
