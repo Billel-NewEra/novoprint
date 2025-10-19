@@ -1,4 +1,4 @@
-const CACHE_NAME = "novoprint-cache-v1";
+const CACHE_NAME = "novoprint-dz-cache-v2";
 const urlsToCache = [
   "/", 
   "/static/css/style.css",
