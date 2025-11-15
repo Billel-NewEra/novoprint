@@ -186,7 +186,7 @@ def load_user(user_id):
 @app.route("/login", methods=["GET", "POST"])
 def login():
     if request.method == "POST":
-        username = request.form["username"]
+        username = request.form["username"].strip().lower()
         password = request.form["password"]
         user = get_user_by_username(username)
         if user and check_password_hash(user.password_hash, password):
