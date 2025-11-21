@@ -306,7 +306,7 @@ def clients():
     conn = get_db_connection()
 
     page = request.args.get("page", 1, type=int)
-    per_page = 10
+    per_page = 20
 
     clients_list = conn.execute(
         """
@@ -344,11 +344,12 @@ def orders():
     conn = get_db_connection()
 
     page = request.args.get("page", 1, type=int)
-    per_page = 10
+    per_page = 20
     period = request.args.get("period", "all")
     status = request.args.get("status", "all")
     client = request.args.get("client", "").strip()
     product = request.args.get("product", "").strip()
+    cmdcl = request.args.get("cmdcl", "").strip()
 
     query = """
         SELECT 
@@ -409,6 +410,34 @@ def orders():
         params.append(status)
         count_params.append(status)
 
+    if cmdcl:
+        raw = cmdcl.strip()
+    
+        # --- Recherche EXACTE entre guillemets " ... "
+        if (raw.startswith('"') and raw.endswith('"')) or (raw.startswith("'") and raw.endswith("'")):
+            exact_value = raw[1:-1].strip()  # enlever guillemets
+            query += " AND TRIM(cmdl) = TRIM(?) COLLATE NOCASE"
+            count_query += " AND TRIM(cmdl) = TRIM(?) COLLATE NOCASE"
+            params.append(exact_value)
+            count_params.append(exact_value)
+    
+        # --- Recherche EXACTE format [ ... ] (optionnel mais pratique)
+        elif raw.startswith("[") and raw.endswith("]"):
+            exact_value = raw[1:-1].strip()
+            query += " AND TRIM(cmdl) = TRIM(?) COLLATE NOCASE"
+            count_query += " AND TRIM(cmdl) = TRIM(?) COLLATE NOCASE"
+            params.append(exact_value)
+            count_params.append(exact_value)
+    
+        # --- Recherche floue (LIKE)
+        else:
+            tokens = [t for t in raw.split() if t]
+            pattern = "%" + "%".join(tokens) + "%"
+            query += " AND cmdl LIKE ? COLLATE NOCASE"
+            count_query += " AND cmdl LIKE ? COLLATE NOCASE"
+            params.append(pattern)
+            count_params.append(pattern)
+
     if client and current_user.role == "admin":
         tokens = [t for t in client.split() if t]
         pattern = "%" + "%".join(tokens) + "%"
@@ -447,7 +476,8 @@ def orders():
         period=period,
         status=status,
         client=client,
-        product=product
+        product=product,
+        cmdcl=cmdcl
     )
 
 # ---- Orders by client ----
@@ -470,7 +500,7 @@ def client_orders(client_id):
         return redirect(url_for("orders"))
 
     page = request.args.get("page", 1, type=int)
-    per_page = 10
+    per_page = 20
 
     orders_list = conn.execute(
         """
@@ -513,7 +543,7 @@ def delivery():
     conn = get_db_connection()
 
     page = request.args.get("page", 1, type=int)
-    per_page = 10
+    per_page = 20
     period = request.args.get("period", "all")
     client = request.args.get("client", "").strip()
     product = request.args.get("product", "").strip()
@@ -628,7 +658,7 @@ def client_delivery(client_id):
         return redirect(url_for("delivery"))
 
     page = request.args.get("page", 1, type=int)
-    per_page = 10
+    per_page = 20
 
     delivery_list = conn.execute(
         """
@@ -672,7 +702,7 @@ def order_delivery(order_id):
     conn = get_db_connection()
 
     page = request.args.get("page", 1, type=int)
-    per_page = 10
+    per_page = 20
     from_client = request.args.get("from_client")
 
     delivery_list = conn.execute(
@@ -838,7 +868,7 @@ def impression():
 
     # Pagination
     page = request.args.get("page", 1, type=int)
-    per_page = 15
+    per_page = 20
 
     # Détermination de la plage de dates (via helper)
     start_iso, end_iso = _period_bounds_impression(periode, date_start, date_end)

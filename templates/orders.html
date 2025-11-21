@@ -36,6 +36,15 @@
       </div>
     </div>
 
+    <div class="col-md">
+      <div class="form-floating">
+        <input type="text" name="cmdcl" value="{{ cmdcl }}" class="form-control"
+            id="cmdcl" placeholder="CmdCL"
+            onkeydown="if(event.key==='Enter'){this.form.submit();}">
+        <label for="cmdcl">🔎 CmdCL</label>
+      </div>
+    </div>
+
     <!-- Filtre client (uniquement admin) -->
 {% if current_user.role == 'admin' %}
 <div class="col-md">
@@ -128,7 +137,7 @@
 
     <!-- Pagination externalisée -->
     {% set endpoint = 'orders' %}
-    {% set params = {'period': period, 'status': status, 'client': client, 'product': product} %}
+    {% set params = {'period': period, 'status': status, 'cmdcl': cmdcl, 'client': client, 'product': product} %}
     {% include 'pagination.html' %}
   </div>
 </div>
