@@ -52,6 +52,21 @@
   </select>
 </div>
 
+    <!-- Filtre article -->
+    <div class="col-md">
+      <label for="article_filter" class="form-label fw-semibold">🏷️ Article</label>
+      <select id="article_filter" name="article_filter" class="form-select">
+        <option value="all" {% if article_filter == 'all' %}selected{% endif %}>
+          Tous
+        </option>
+        {% for a in articles %}
+          <option value="{{ a }}" {% if article_filter == a %}selected{% endif %}>
+            {{ a }}
+          </option>
+        {% endfor %}
+      </select>
+    </div>
+
   </div>
 </form>
 
@@ -107,7 +122,8 @@
       'periode': periode,
       'date_start': date_start,
       'date_end': date_end,
-      'user_filter': user_filter
+      'user_filter': user_filter,
+      'article_filter': article_filter
     } %}
     {% include 'pagination.html' %}
   </div>
@@ -149,6 +165,19 @@ document.addEventListener("DOMContentLoaded", function() {
     allowClear: true,
     width: '100%',
     minimumResultsForSearch: 0
+  });
+
+  // Activation Select2 sur article_filter
+  $('#article_filter').select2({
+    placeholder: "🔍 Rechercher un article...",
+    allowClear: true,
+    width: '100%',
+    minimumResultsForSearch: 0
+  });
+
+  // Soumission automatique
+  $('#article_filter').on('change', function () {
+    this.form.submit();
   });
 
   // Focus automatique dans la barre de recherche

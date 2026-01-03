@@ -865,6 +865,7 @@ def impression():
     date_start  = request.args.get("date_start")
     date_end    = request.args.get("date_end")
     user_filter = (request.args.get("user_filter") or "all").strip()
+    article_filter = (request.args.get("article_filter") or "all").strip()
 
     # Pagination
     page = request.args.get("page", 1, type=int)
@@ -885,6 +886,15 @@ def impression():
         ORDER BY utilisateur
     """)
     users = [r["utilisateur"] for r in cur.fetchall()]
+
+    # Liste articles des utilisateurs
+    cur.execute("""
+    SELECT DISTINCT article
+    FROM impressions_simplifiees
+    WHERE article IS NOT NULL
+    ORDER BY article
+    """)
+    articles = [r["article"] for r in cur.fetchall()]
 
     # Requête principale
     query = """
@@ -909,6 +919,13 @@ def impression():
         params.append(user_filter)
         count_params.append(user_filter)
 
+    # Filtre article
+    if article_filter != "all":
+        query += " AND article = ?"
+        count_query += " AND article = ?"
+        params.append(article_filter)
+        count_params.append(article_filter)
+
     # Tri + pagination
     query += " ORDER BY date_impression DESC, tirage DESC LIMIT ? OFFSET ?"
     params.extend([per_page, (page - 1) * per_page])
@@ -927,10 +944,12 @@ def impression():
         "impression.html",
         rows=rows,
         users=users,
+        articles=articles,
         periode=periode,
         date_start=date_start or "",
         date_end=date_end or "",
         user_filter=user_filter,
+        article_filter=article_filter,
         page=page,
         total_pages=total_pages,
         start=start,
