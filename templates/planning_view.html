@@ -58,7 +58,7 @@ body{
 /* Logout style sidebar */
 
 .logout-icon{
-    font-size:1.6rem;
+    font-size:1.2rem;
     padding:8px;
     border-radius:14px;
     background:rgba(255,255,255,0.05);
@@ -174,7 +174,7 @@ body{
 }
 
 .salpac-logo{
-    height:60px;
+    height:70px;
     filter:drop-shadow(0 0 6px rgba(255,255,255,0.15));
 }
 
@@ -218,7 +218,7 @@ body{
     }
 
     .salpac-logo{
-        height:40px;
+        height:60px;
     }
 
     .salpac-text{
@@ -276,9 +276,7 @@ body{
     filter:blur(40px);
 }
 
-.salpac-logo{
-    height:90px;
-}
+
 
 
 </style>
@@ -410,6 +408,35 @@ loadPlanning();
 
 setInterval(loadPlanning,10000);
 
+</script>
+
+<script>
+function updateDateTime(){
+    const el = document.getElementById("datetime");
+
+    const now = new Date();
+
+    const time = now.toLocaleTimeString("fr-FR", {
+        hour: "2-digit",
+        minute: "2-digit",
+        second: "2-digit"
+    });
+
+    const date = now.toLocaleDateString("fr-FR", {
+        weekday:"short",
+        day:"2-digit",
+        month:"short",
+        year:"numeric"
+    });
+
+    el.innerHTML = `
+        <div class="time">${time}</div>
+        <div class="date">${date}</div>
+    `;
+}
+
+updateDateTime();
+setInterval(updateDateTime,1000);
 </script>
 
 </body>
