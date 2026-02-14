@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, redirect, url_for, flash, send_from_directory
+from flask import Flask, render_template, request, redirect, url_for, flash, send_from_directory, jsonify
 import sqlite3
 import calendar
 from datetime import date, datetime, timedelta, timezone
@@ -51,6 +51,12 @@ def get_db_connection():
 # --- Connexion SQLite pour authentification (users) ---
 def get_auth_connection():
     conn = sqlite3.connect("instance/auth.sqlite")
+    conn.row_factory = sqlite3.Row
+    return conn
+
+# --- Connexion planning DB ---
+def get_app_connection():
+    conn = sqlite3.connect("instance/app.sqlite")
     conn.row_factory = sqlite3.Row
     return conn
 
@@ -175,6 +181,39 @@ def _period_bounds_impression(periode: str, date_start: str|None, date_end: str|
 
     return None, None
 
+def init_app_db():
+    conn = get_app_connection()
+    cur = conn.cursor()
+
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS planning_version (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            created_at TEXT NOT NULL,
+            created_by TEXT
+        )
+    """)
+
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS planning_items (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            version_id INTEGER NOT NULL,
+            num_reservation INTEGER NOT NULL,
+            position INTEGER NOT NULL,
+            status_snapshot TEXT,
+            updated_at TEXT NOT NULL,
+            UNIQUE(version_id, num_reservation),
+            FOREIGN KEY(version_id) REFERENCES planning_version(id)
+        )
+    """)
+
+    cur.execute(
+        "CREATE INDEX IF NOT EXISTS idx_planning_items_version_pos "
+        "ON planning_items(version_id, position)"
+    )
+
+    conn.commit()
+    conn.close()
+
 @login_manager.user_loader
 def load_user(user_id):
     return get_user_by_id(user_id)
@@ -185,12 +224,19 @@ def load_user(user_id):
 
 @app.route("/login", methods=["GET", "POST"])
 def login():
+    if current_user.is_authenticated:
+        if current_user.role == "planning":
+            return redirect(url_for("planning_view"))
+        return redirect(url_for("index"))
     if request.method == "POST":
         username = request.form["username"].strip().lower()
         password = request.form["password"]
         user = get_user_by_username(username)
         if user and check_password_hash(user.password_hash, password):
             login_user(user)
+            # 👇 redirection selon rôle
+            if user.role == "planning":
+                return redirect(url_for("planning_view"))
             flash("Connexion réussie ✅", "success")
             return redirect(url_for("index"))
         else:
@@ -250,8 +296,10 @@ def home():
 @app.route("/index")
 @login_required
 def index():
+    if current_user.role == "planning":
+        return redirect(url_for("planning_view"))
+    
     conn = get_db_connection()
-
     # Vue admin → totaux globaux
     if current_user.role == "admin":
         total_clients = conn.execute("SELECT COUNT(*) FROM client").fetchone()[0]
@@ -957,5 +1005,579 @@ def impression():
         total_rows=total_rows,
     )
 
+######### Planning ##########
+
+@app.route("/admin/planning/test")
+@login_required
+def planning_test():
+    if current_user.role not in ("admin", "superadmin"):
+        return "Forbidden", 403
+
+    conn = get_app_connection()
+    v = conn.execute("SELECT COUNT(*) AS c FROM planning_version").fetchone()["c"]
+    conn.close()
+    return f"✅ app.sqlite OK — planning_version rows = {v}"
+
+
+@app.route("/admin/planning/create", methods=["POST"])
+@login_required
+def planning_create():
+
+    if current_user.role not in ("admin","superadmin"):
+        return "Forbidden", 403
+
+    conn = get_db_connection()
+
+    rows = conn.execute("""
+        SELECT 
+            num_reservation,
+            cmdl,
+            client,
+            produit,
+            qte,
+            reste,
+            situation
+        FROM orders
+        WHERE situation != 'LIVREE'
+          AND date_reservation IS NOT NULL
+        ORDER BY date_reservation ASC
+        LIMIT 10
+    """).fetchall()
+
+    conn.close()
+
+    return jsonify({
+        "success": True,
+        "orders":[
+            {
+                "num": r["num_reservation"],
+                "cmdcl": r["cmdl"] or "",
+                "client": r["client"] or "",
+                "produit": r["produit"] or "",
+                "qte": int(r["qte"] or 0),
+                "reste": int(r["reste"] or 0),
+                "statut": (r["situation"] or "").strip()
+            }
+            for r in rows
+        ]
+    })
+
+
+@app.route("/planning")
+@login_required
+def planning():
+
+    if current_user.role not in ("admin"):
+        return "Forbidden",403
+    conn_app = get_app_connection()
+    conn_local = get_db_connection()
+
+    try:
+        # 1️⃣ récupérer LIVRÉES depuis local.sqlite
+        livrees = conn_local.execute("""
+            SELECT num_reservation
+            FROM orders
+            WHERE situation='LIVREE'
+        """).fetchall()
+
+        if livrees:
+        
+            ids = [str(r["num_reservation"]) for r in livrees]
+            placeholders = ",".join(["?"] * len(ids))
+
+            # 2️⃣ supprimer dans app.sqlite
+            conn_app.execute(f"""
+                DELETE FROM planning_items
+                WHERE num_reservation IN ({placeholders})
+            """, ids)
+
+            conn_app.commit()
+
+        # 1️⃣ Dernière version
+        v = conn_app.execute("""
+            SELECT id
+            FROM planning_version
+            ORDER BY id DESC
+            LIMIT 1
+        """).fetchone()
+
+        if not v:
+            return render_template("planning.html", orders=[])
+
+        version_id = v["id"]
+
+        # 2️⃣ Items planning
+        items = conn_app.execute("""
+            SELECT num_reservation, position
+            FROM planning_items
+            WHERE version_id = ?
+            ORDER BY position ASC
+        """, (version_id,)).fetchall()
+
+        if not items:
+            return render_template("planning.html", orders=[])
+
+        nums = [it["num_reservation"] for it in items]
+
+        # sécurité SQL
+        placeholders = ",".join(["?"] * len(nums))
+
+        # 3️⃣ Récupérer commandes
+        orders_data = conn_local.execute(f"""
+            SELECT 
+                num_reservation,
+                cmdl,
+                client,
+                produit,
+                qte,
+                reste,
+                situation
+            FROM orders
+            WHERE num_reservation IN ({placeholders})
+        """, nums).fetchall()
+
+        # mapping
+        orders_map = {
+            r["num_reservation"]: r
+            for r in orders_data
+        }
+
+        orders = []
+
+        for it in items:
+            o = orders_map.get(it["num_reservation"])
+
+            if not o:
+                continue
+
+            orders.append({
+                "num": it["num_reservation"],
+                "cmdcl": o["cmdl"] or "",
+                "client": o["client"] or "",
+                "produit": o["produit"] or "",
+                "qte": int(o["qte"] or 0),
+                "reste": int(o["reste"] or 0),
+                "statut": (o["situation"] or "").strip(),
+                "pos": it["position"]
+            })
+
+        return render_template("planning.html", orders=orders)
+
+    finally:
+        conn_app.close()
+        conn_local.close()
+
+@app.route("/api/planning/save", methods=["POST"])
+@login_required
+def planning_save():
+
+    if current_user.role not in ("admin","superadmin"):
+        return "Forbidden", 403
+
+    data = request.get_json()
+    order = data.get("order", [])
+
+    conn = get_app_connection()
+    now = datetime.utcnow().isoformat()
+
+    # 🔥 1️⃣ créer nouvelle version
+    cur = conn.cursor()
+    cur.execute("""
+        INSERT INTO planning_version (created_at, created_by)
+        VALUES (?,?)
+    """,(now,current_user.username))
+
+    version_id = cur.lastrowid
+
+    # 🔥 2️⃣ insérer items
+    pos = 1
+
+    for num in order:
+        conn.execute("""
+            INSERT INTO planning_items
+            (version_id,num_reservation,position,updated_at)
+            VALUES (?,?,?,?)
+        """,(version_id,num,pos,now))
+
+        pos += 1
+
+    conn.commit()
+    conn.close()
+
+    return jsonify({"success":True})
+
+
+
+@app.route("/api/planning/version")
+@login_required
+def planning_version_api():
+
+    conn = get_app_connection()
+
+    v = conn.execute("""
+        SELECT MAX(id) as version
+        FROM planning_version
+    """).fetchone()
+
+    conn.close()
+
+    return jsonify({
+        "version": v["version"] if v and v["version"] else 0
+    })
+
+@app.route("/admin/planning/new", methods=["POST"])
+@login_required
+def planning_new():
+
+    if current_user.role not in ("admin","superadmin"):
+        return "Forbidden", 403
+
+    # ❌ plus d'insert DB ici
+    # juste signaler au front de reset l'UI
+
+    return jsonify({"success":True})
+
+
+
+@app.route("/planning/add", methods=["POST"])
+@login_required
+def planning_add():
+
+    if current_user.role not in ("admin","superadmin"):
+        return "Forbidden", 403
+
+    data = request.get_json()
+    num = data.get("num")
+
+    if not num:
+        return jsonify({"error":"missing num"}),400
+
+    conn = get_app_connection()
+
+    # dernière version
+    v = conn.execute("""
+        SELECT id
+        FROM planning_version
+        ORDER BY id DESC
+        LIMIT 1
+    """).fetchone()
+
+    if not v:
+        return jsonify({"error":"no version"}),400
+
+    version_id = v["id"]
+
+    # position suivante
+    p = conn.execute("""
+        SELECT COALESCE(MAX(position),0)+1 AS pos
+        FROM planning_items
+        WHERE version_id = ?
+    """,(version_id,)).fetchone()["pos"]
+
+    count = conn.execute("""
+        SELECT COUNT(*) as c
+        FROM planning_items
+        WHERE version_id = ?
+    """,(version_id,)).fetchone()["c"]
+
+    if count >= 10:
+        conn.close()
+        return jsonify({"error":"max reached"}),400
+    
+    exists = conn.execute("""
+    SELECT 1 FROM planning_items
+    WHERE version_id=? AND num_reservation=?
+    """,(version_id,num)).fetchone()
+
+    if exists:
+        conn.close()
+        return jsonify({"error":"already exists"}),400
+
+    conn.execute("""
+        INSERT INTO planning_items
+        (version_id,num_reservation,position,updated_at)
+        VALUES (?,?,?,?)
+    """,(version_id,num,p,datetime.utcnow().isoformat()))
+
+    conn.commit()
+    conn.close()
+
+    return jsonify({"success":True})
+
+@app.route("/api/planning/search")
+@login_required
+def planning_search():
+
+    if current_user.role not in ("admin"):
+        return "Forbidden",403
+
+    term = request.args.get("term","").strip()
+    page = int(request.args.get("page",1))
+    exclude = request.args.getlist("exclude[]")
+
+    limit = 20
+    offset = (page-1)*limit
+
+    conn = get_db_connection()
+
+    base_query = """
+        FROM orders
+        WHERE situation != 'LIVREE'
+          AND date_reservation IS NOT NULL
+    """
+
+    params = []
+
+    if term:
+        base_query += """
+            AND (
+                cmdl LIKE ?
+                OR client LIKE ?
+                OR num_reservation LIKE ?
+            )
+        """
+        like = f"%{term}%"
+        params += [like,like,like]
+
+    if exclude:
+        placeholders = ",".join(["?"]*len(exclude))
+        base_query += f" AND num_reservation NOT IN ({placeholders})"
+        params += exclude
+
+    rows = conn.execute(f"""
+        SELECT 
+            num_reservation,
+            cmdl,
+            client,
+            produit,
+            qte,
+            reste,
+            situation
+        {base_query}
+        ORDER BY date_reservation ASC
+        LIMIT ? OFFSET ?
+    """, params + [limit,offset]).fetchall()
+
+    total = conn.execute(f"""
+        SELECT COUNT(*) as c
+        {base_query}
+    """, params).fetchone()["c"]
+
+    conn.close()
+
+    return jsonify({
+        "results":[
+            {
+                "id": str(r["num_reservation"]),
+                "cmdcl": r["cmdl"] or "",
+                "client": r["client"] or "",
+                "produit": r["produit"] or "",
+                "qte": int(r["qte"] or 0),
+                "reste": int(r["reste"] or 0),
+                "statut": r["situation"],
+                "text": r["cmdl"] or "",
+            }
+            for r in rows
+        ],
+        "pagination":{
+            "more": (page*limit) < total
+        }
+    })
+
+
+@app.route("/planning/view")
+@login_required
+def planning_view():
+
+    # autoriser admin ou planning
+    if current_user.role not in ("admin","superadmin","planning"):
+        return "Forbidden",403
+
+    conn_app = get_app_connection()
+    conn_local = get_db_connection()
+
+    try:
+        # 1️⃣ récupérer LIVRÉES depuis local.sqlite
+        livrees = conn_local.execute("""
+            SELECT num_reservation
+            FROM orders
+            WHERE situation='LIVREE'
+        """).fetchall()
+
+        if livrees:
+        
+            ids = [str(r["num_reservation"]) for r in livrees]
+            placeholders = ",".join(["?"] * len(ids))
+
+            # 2️⃣ supprimer dans app.sqlite
+            conn_app.execute(f"""
+                DELETE FROM planning_items
+                WHERE num_reservation IN ({placeholders})
+            """, ids)
+
+            conn_app.commit()
+        
+        v = conn_app.execute("""
+            SELECT id
+            FROM planning_version
+            ORDER BY id DESC
+            LIMIT 1
+        """).fetchone()
+
+        if not v:
+            return render_template("planning_view.html", orders=[])
+
+        version_id = v["id"]
+
+        items = conn_app.execute("""
+            SELECT num_reservation, position
+            FROM planning_items
+            WHERE version_id = ?
+            ORDER BY position ASC
+        """,(version_id,)).fetchall()
+
+        if not items:
+            return render_template("planning_view.html", orders=[])
+
+        nums=[it["num_reservation"] for it in items]
+        placeholders=",".join(["?"]*len(nums))
+
+        orders_data=conn_local.execute(f"""
+            SELECT num_reservation,cmdl,client,produit,qte,reste,situation
+            FROM orders
+            WHERE num_reservation IN ({placeholders})
+        """,nums).fetchall()
+
+        orders_map={r["num_reservation"]:r for r in orders_data}
+
+        orders=[]
+
+        for it in items:
+            o=orders_map.get(it["num_reservation"])
+            if not o: continue
+
+            orders.append({
+                "num":it["num_reservation"],
+                "cmdcl":o["cmdl"] or "",
+                "client":o["client"] or "",
+                "produit":o["produit"] or "",
+                "qte":int(o["qte"] or 0),
+                "reste":int(o["reste"] or 0),
+                "statut":(o["situation"] or "").strip(),
+                "pos":it["position"]
+            })
+
+        return render_template("planning_view.html",orders=orders)
+
+    finally:
+        conn_app.close()
+        conn_local.close()
+
+
+@app.route("/api/planning/data")
+@login_required
+def planning_data():
+
+    if current_user.role not in ("admin","superadmin","planning"):
+        return "Forbidden",403
+
+    conn_app = get_app_connection()
+    conn_local = get_db_connection()
+
+    try:
+        # nettoyage automatique
+        livrees = conn_local.execute("""
+            SELECT num_reservation
+            FROM orders
+            WHERE situation='LIVREE'
+        """).fetchall()
+
+        if livrees:
+            ids=[str(r["num_reservation"]) for r in livrees]
+            placeholders=",".join(["?"]*len(ids))
+
+            conn_app.execute(f"""
+                DELETE FROM planning_items
+                WHERE num_reservation IN ({placeholders})
+            """,ids)
+
+            conn_app.commit()
+
+        v = conn_app.execute("""
+            SELECT id
+            FROM planning_version
+            ORDER BY id DESC
+            LIMIT 1
+        """).fetchone()
+
+        if not v:
+            return jsonify({"orders":[]})
+
+        version_id = v["id"]
+
+        items = conn_app.execute("""
+            SELECT num_reservation, position
+            FROM planning_items
+            WHERE version_id=?
+            ORDER BY position
+        """,(version_id,)).fetchall()
+
+        nums=[it["num_reservation"] for it in items]
+
+        if not nums:
+            return jsonify({"orders":[]})
+
+        placeholders=",".join(["?"]*len(nums))
+
+        orders=conn_local.execute(f"""
+            SELECT num_reservation,cmdl,client,produit,qte,reste
+            FROM orders
+            WHERE num_reservation IN ({placeholders})
+              AND situation != 'LIVREE'
+        """,nums).fetchall()
+
+        orders_map={o["num_reservation"]:o for o in orders}
+
+        result=[]
+
+        for it in items:
+            o=orders_map.get(it["num_reservation"])
+            if not o: continue
+
+            result.append({
+                "num":it["num_reservation"],
+                "cmdcl":o["cmdl"],
+                "client":o["client"],
+                "produit":o["produit"],
+                "qte":o["qte"],
+                "reste":o["reste"]
+            })
+
+        return jsonify({"orders":result})
+
+    finally:
+        conn_app.close()
+        conn_local.close()
+
+@app.route("/api/planning/livrees")
+@login_required
+def planning_livrees():
+
+    conn = get_db_connection()
+
+    rows = conn.execute("""
+        SELECT num_reservation
+        FROM orders
+        WHERE situation='LIVREE'
+    """).fetchall()
+
+    conn.close()
+
+    return jsonify({
+        "ids":[r["num_reservation"] for r in rows]
+    })
+
+
+init_app_db()
 if __name__ == "__main__":
     app.run(debug=True)
