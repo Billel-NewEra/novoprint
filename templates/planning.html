@@ -450,6 +450,18 @@
 }
   optimal */
 
+.status-encours{
+    background:#b45309;   /* amber 700 */
+    color:#fff7ed;
+    font-weight:600;
+}
+
+.status-livraison{
+    background:#0369a1;   /* blue 700 profond */
+    color:#e0f2fe;
+    font-weight:600;
+}
+
 </style>
 
 <div class="planning-header d-flex justify-content-between align-items-center mb-3">
@@ -511,11 +523,11 @@
     {% if s == "LIVREE" %}
         <span class="badge me-2 bg-success-subtle text-success">Livrée</span>
     {% elif s == "LIVRAISON" %}
-        <span class="badge me-2 bg-info-subtle text-info">Livraison</span>
+        <span class="badge me-2 status-livraison">Livraison</span>
     {% elif s == "BAG" %}
         <span class="badge me-2 bg-bag-subtle text-bag">BAG</span>
     {% elif s == "EN COURS" %}
-        <span class="badge me-2 bg-warning-subtle text-warning">En cours</span>
+        <span class="badge me-2 status-encours">En cours</span>
     {% else %}
         <span class="badge me-2 bg-secondary">{{ o.statut }}</span>
     {% endif %}
@@ -707,13 +719,13 @@ $("#addOrder").on("select2:select", function(e){
         return '<span class="badge me-2 bg-success-subtle text-success">Livrée</span>';
 
     if(statut === "LIVRAISON")
-        return '<span class="badge me-2 bg-info-subtle text-info">Livraison</span>';
+        return '<span class="badge me-2 status-livraison">Livraison</span>';
 
     if(statut === "BAG")
         return '<span class="badge me-2 bg-bag-subtle text-bag">BAG</span>';
 
     if(statut === "EN COURS")
-        return '<span class="badge me-2 bg-warning-subtle text-warning">En cours</span>';
+        return '<span class="badge me-2 status-encours">En cours</span>';
 
     return `<span class="badge me-2 bg-secondary">${statut}</span>`;
     }
@@ -867,13 +879,13 @@ function generatePlanning(){
             return '<span class="badge me-2 bg-success-subtle text-success">Livrée</span>';
 
         if(statut==="LIVRAISON")
-            return '<span class="badge me-2 bg-info-subtle text-info">Livraison</span>';
+            return '<span class="badge me-2 status-livraison">Livraison</span>';
 
         if(statut==="BAG")
             return '<span class="badge me-2 bg-bag-subtle text-bag">BAG</span>';
 
         if(statut==="EN COURS")
-            return '<span class="badge me-2 bg-warning-subtle text-warning">En cours</span>';
+            return '<span class="badge me-2 status-encours">En cours</span>';
 
         return `<span class="badge me-2 bg-secondary">${statut}</span>`;
     };
