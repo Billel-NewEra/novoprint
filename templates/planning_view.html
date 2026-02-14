@@ -15,9 +15,14 @@
 ====================== */
 
 body{
-    background:linear-gradient(135deg,#1e3a8a,#3b82f6,#0f172a);
+    background:
+        radial-gradient(circle at 20% 20%, #1e3a8a 0%, transparent 40%),
+        radial-gradient(circle at 80% 30%, #0f172a 0%, transparent 50%),
+        linear-gradient(135deg, #0f172a, #1e293b);
+
     color:white;
-    font-family:Inter,sans-serif;
+    font-family:Inter, sans-serif;
+    min-height:100vh;
 }
 
 
@@ -257,6 +262,24 @@ body{
         padding:5px 10px;
     }
 }
+
+.planning-list{
+    position:relative;
+}
+
+.planning-list::before{
+    content:"";
+    position:absolute;
+    inset:-40px;
+    background:radial-gradient(circle, rgba(56,189,248,0.15), transparent 70%);
+    z-index:-1;
+    filter:blur(40px);
+}
+
+.salpac-logo{
+    height:90px;
+}
+
 
 </style>
 </head>
