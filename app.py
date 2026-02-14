@@ -330,7 +330,7 @@ def index():
         total_clients = conn.execute("SELECT COUNT(*) FROM client").fetchone()[0]
         total_orders = conn.execute("SELECT COUNT(*) FROM orders").fetchone()[0]
         orders_livree = conn.execute("SELECT COUNT(*) FROM orders WHERE situation = 'LIVREE'").fetchone()[0]
-        orders_encours = conn.execute("SELECT COUNT(*) FROM orders WHERE situation = 'EN COURS'").fetchone()[0]
+        orders_encours = conn.execute("SELECT COUNT(*) FROM orders WHERE situation = 'EN COURS' COLLATE NOCASE").fetchone()[0]
         orders_livraison = conn.execute("SELECT COUNT(*) FROM orders WHERE situation = 'LIVRAISON'").fetchone()[0]
         total_delivery = conn.execute("SELECT COUNT(*) FROM delivery").fetchone()[0]
         # Comptage impressions
@@ -346,7 +346,7 @@ def index():
             total_clients = 1
             total_orders = conn.execute("SELECT COUNT(*) FROM orders WHERE client = ?", (client_name,)).fetchone()[0]
             orders_livree = conn.execute("SELECT COUNT(*) FROM orders WHERE client = ? AND situation = 'LIVREE'", (client_name,)).fetchone()[0]
-            orders_encours = conn.execute("SELECT COUNT(*) FROM orders WHERE client = ? AND situation = 'EN COURS'", (client_name,)).fetchone()[0]
+            orders_encours = conn.execute("SELECT COUNT(*) FROM orders WHERE client = ? AND situation = 'EN COURS' COLLATE NOCASE", (client_name,)).fetchone()[0]
             orders_livraison = conn.execute("SELECT COUNT(*) FROM orders WHERE client = ? AND situation = 'LIVRAISON'", (client_name,)).fetchone()[0]
             total_delivery = conn.execute("SELECT COUNT(*) FROM delivery WHERE client = ?", (client_name,)).fetchone()[0]
             total_impressions = 0
@@ -478,8 +478,8 @@ def orders():
         count_params.append(start)
 
     if status != "all":
-        query += " AND situation = ?"
-        count_query += " AND situation = ?"
+        query += " AND situation = ? COLLATE NOCASE"
+        count_query += " AND situation = ? COLLATE NOCASE"
         params.append(status)
         count_params.append(status)
 

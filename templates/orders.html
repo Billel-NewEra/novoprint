@@ -111,8 +111,8 @@
     <span class="badge bg-success">{{ o.situation }}</span>
   {% elif o.situation == "LIVRAISON" %}
     <span class="badge bg-info text-dark">{{ o.situation }}</span>
-  {% elif o.situation == "EN COURS" %}
-    <span class="badge bg-warning text-dark">{{ o.situation }}</span>
+  {% elif o.situation|upper == "EN COURS" %}
+    <span class="badge bg-warning text-dark">{{ o.situation|upper }}</span>
   {% else %}
     <span class="badge bg-secondary">{{ o.situation }}</span>
   {% endif %}
