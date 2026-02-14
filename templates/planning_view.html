@@ -5,25 +5,324 @@
 <title>Planning Atelier</title>
 
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+<link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<style>
+
+/* ======================
+   BASE
+====================== */
+
+body{
+    background:linear-gradient(135deg,#1e3a8a,#3b82f6,#0f172a);
+    color:white;
+    font-family:Inter,sans-serif;
+}
+
+
+/* ======================
+   HEADER
+====================== */
+
+.header{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    margin-bottom:30px;
+    position:relative;
+}
+
+/* Logo */
+
+.logo{
+    height:48px;
+}
+
+/* Titre centré réel */
+
+.title{
+    position:absolute;
+    left:50%;
+    transform:translateX(-50%);
+    font-size:1.8rem;
+    font-weight:700;
+    letter-spacing:0.5px;
+}
+
+/* Logout style sidebar */
+
+.logout-icon{
+    font-size:1.6rem;
+    padding:8px;
+    border-radius:14px;
+    background:rgba(255,255,255,0.05);
+    color:white;
+    text-decoration:none;
+}
+
+.logout-icon:hover{
+    background:rgba(239,68,68,0.15);
+    color:#ef4444;
+}
+
+
+/* ======================
+   LISTE
+====================== */
+
+.planning-list{
+    max-width:1000px;
+    margin:auto;
+}
+
+/* Carte commande */
+
+.planning-item{
+    background:#1e293b;
+    padding:16px;
+    border-radius:12px;
+    margin-bottom:12px;
+    border-left:4px solid #38bdf8;
+}
+
+/* Ligne 1 */
+
+.line-top{
+    font-size:1.05rem;
+    font-weight:600;
+}
+
+/* Priorité */
+
+.rank{
+    color:#facc15;
+    font-size:1.25rem;
+    font-weight:800;
+    margin-right:6px;
+}
+
+/* CMDCL */
+
+.cmdcl{
+    color:#38bdf8;
+    font-weight:700;
+    margin-left:6px;
+}
+
+
+/* ======================
+   CHIPS INFO
+====================== */
+
+.line-bottom{
+    margin-top:10px;
+    display:flex;
+    gap:10px;
+    flex-wrap:wrap;
+}
+
+.chip{
+    padding:6px 12px;
+    border-radius:20px;
+    font-size:0.9rem;
+    font-weight:600;
+}
+
+/* Client */
+
+.chip.client{
+    background:#312e81;
+    color:#c7d2fe;
+}
+
+/* Produit */
+
+.chip.produit{
+    background:#14532d;
+    color:#bbf7d0;
+}
+
+/* QTE (bleu planning) */
+
+.chip.qte{
+    background:#1e40af;
+    color:#dbeafe;
+}
+
+/* RESTE (jaune planning) */
+
+.chip.reste{
+    background:#facc15;
+    color:#111827;
+}
+
+/* Bloc logo + texte */
+
+/* SALPAC BRAND (identique sidebar) */
+
+.salpac-brand{
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    line-height:1;
+}
+
+.salpac-logo{
+    height:60px;
+    filter:drop-shadow(0 0 6px rgba(255,255,255,0.15));
+}
+
+.salpac-text{
+    font-weight:600;
+    font-size:1rem;
+    letter-spacing:1px;
+    margin-top:4px;
+    color:#afcadf;
+    text-shadow:0 0 10px rgba(73,190,255,.4);
+}
+
+/* Date & Heure live */
+
+.datetime{
+    position:absolute;
+    right:70px;
+    text-align:right;
+    font-size:0.95rem;
+    line-height:1.2;
+    color:#cbd5f5;
+    font-weight:500;
+}
+
+.datetime .time{
+    font-size:1.2rem;
+    font-weight:700;
+    color:#38bdf8;
+}
+
+.datetime .date{
+    font-size:0.85rem;
+    opacity:0.85;
+}
+
+/* Mobile */
+
+@media(max-width:576px){
+    .datetime{
+        display:none; /* évite surcharge mobile */
+    }
+
+    .salpac-logo{
+        height:40px;
+    }
+
+    .salpac-text{
+        font-size:.85rem;
+    }
+
+    /* Réduit padding global */
+    .container-fluid{
+        padding:12px !important;
+    }
+
+    /* Header plus compact */
+    .header{
+        margin-bottom:18px;
+    }
+
+    /* Titre légèrement réduit */
+    .title{
+        font-size:1.4rem;
+    }
+
+    /* Cartes plus fines */
+    .planning-item{
+        padding:12px;
+        margin-bottom:10px;
+    }
+
+    /* Ligne top plus compacte */
+    .line-top{
+        font-size:0.95rem;
+    }
+
+    /* Priorité un peu plus petite */
+    .rank{
+        font-size:1.1rem;
+    }
+
+    /* Chips plus compactes */
+    .chip{
+        font-size:0.9rem;
+        padding:5px 10px;
+    }
+}
+
+</style>
 </head>
 
-<body style="background:#0f172a;color:white">
+<body>
 
-<div class="container mt-4">
+<div class="container-fluid p-4">
 
-<h3>Planning Atelier</h3>
+<!-- HEADER -->
+
+<div class="header">
+
+<div class="salpac-brand">
+    <img src="{{ url_for('static', filename='img/logo.png') }}" alt="Logo" class="salpac-logo">
+    
+</div>
+
+<div class="title">
+Planning Atelier
+</div>
+
+<div class="datetime" id="datetime"></div>
+
+<a href="{{ url_for('logout') }}" class="logout-icon" title="Déconnexion">
+    <i class="bi bi-power"></i>
+</a>
+
+</div>
+
+
+<!-- LISTE -->
 
 <div class="planning-list">
 
 {% for o in orders %}
-<div class="card mb-2 p-3">
-<b>P{{ loop.index }}</b>
-{{ o.num }} — {{ o.cmdcl }}
-<br>
-{{ o.client }} | {{ o.produit }}
-<br>
-Qte {{ o.qte }} | Reste {{ o.reste }}
+
+<div class="planning-item">
+
+<div class="line-top">
+<span class="rank">P{{ loop.index }}</span>
+{{ o.num }} —
+<span class="cmdcl">{{ o.cmdcl }}</span>
 </div>
+
+<div class="line-bottom">
+
+<span class="chip client">
+{{ o.client }}
+</span>
+
+<span class="chip produit">
+{{ o.produit }}
+</span>
+
+<span class="chip qte">
+Qte {{ o.qte }}
+</span>
+
+<span class="chip reste">
+Reste {{ o.reste }}
+</span>
+
+</div>
+
+</div>
+
 {% endfor %}
 
 </div>
@@ -32,26 +331,61 @@ Qte {{ o.qte }} | Reste {{ o.reste }}
 
 <script>
 
-const API_VERSION="/api/planning/version";
-const API_DATA="/api/planning/data";
-let currentVersion=0;
+const API_VERSION = "{{ url_for('planning_version_api') }}";
+const API_DATA = "{{ url_for('planning_data') }}";
+let currentVersion = 0;
 
-async function init(){
-    const r=await fetch(API_VERSION);
-    const d=await r.json();
-    currentVersion=d.version;
+async function initVersion(){
+    const r = await fetch(API_VERSION);
+    const d = await r.json();
+    currentVersion = Number(d.version);
 }
 
-async function check(){
-    const r=await fetch(API_VERSION);
-    const d=await r.json();
-    if(d.version!=currentVersion){
-        location.reload();
+async function checkVersion(){
+    const r = await fetch(API_VERSION);
+    const d = await r.json();
+
+    const v = Number(d.version);
+
+    if(v !== currentVersion){
+        currentVersion = v;
+        loadPlanning();
     }
 }
 
-setInterval(check,10000);
-init();
+async function loadPlanning(){
+
+    const r = await fetch(API_DATA + "?t=" + Date.now(), {
+        cache: "no-store"
+    });
+
+    const d = await r.json();
+
+    const container = document.querySelector(".planning-list");
+    container.innerHTML = "";
+
+    d.orders.forEach((o,i)=>{
+        container.innerHTML += `
+        <div class="planning-item">
+            <div class="line-top">
+                <span class="rank">P${i+1}</span>
+                ${o.num} —
+                <span class="cmdcl">${o.cmdcl}</span>
+            </div>
+            <div class="line-bottom">
+                <span class="chip client">${o.client}</span>
+                <span class="chip produit">${o.produit}</span>
+                <span class="chip qte">Qte ${o.qte}</span>
+                <span class="chip reste">Reste ${o.reste}</span>
+            </div>
+        </div>`;
+    });
+}
+
+initVersion();
+loadPlanning();
+
+setInterval(loadPlanning,10000);
 
 </script>
 
