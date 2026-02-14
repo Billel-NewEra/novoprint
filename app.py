@@ -11,7 +11,25 @@ from werkzeug.security import check_password_hash
 import os
 
 app = Flask(__name__)
-app.secret_key = "change_this_to_a_real_secret_key"
+# SECRET KEY
+app.secret_key = os.environ.get("SECRET_KEY", os.urandom(32))
+
+# Remember me
+app.config["REMEMBER_COOKIE_DURATION"] = timedelta(days=30)
+app.config["REMEMBER_COOKIE_HTTPONLY"] = True
+app.config["REMEMBER_COOKIE_SAMESITE"] = "Lax"
+app.config["REMEMBER_COOKIE_SECURE"] = not app.debug
+
+# Session cookies
+app.config["SESSION_COOKIE_HTTPONLY"] = True
+app.config["SESSION_COOKIE_SAMESITE"] = "Lax"
+app.config["SESSION_COOKIE_SECURE"] = not app.debug
+
+# Protection
+app.config["SESSION_PROTECTION"] = "strong"
+
+# Durée session normale
+app.permanent_session_lifetime = timedelta(days=7)
 
 # chemin absolu vers ton vrai dossier static
 static_folder = os.path.join(os.path.dirname(__file__), 'static')
@@ -233,7 +251,7 @@ def login():
         password = request.form["password"]
         user = get_user_by_username(username)
         if user and check_password_hash(user.password_hash, password):
-            login_user(user)
+            login_user(user, remember=True)
             # 👇 redirection selon rôle
             if user.role == "planning":
                 return redirect(url_for("planning_view"))
@@ -290,7 +308,14 @@ def sw():
 
 @app.route("/")
 def home():
-    return render_template("home.html")
+    if current_user.is_authenticated:
+        
+        if current_user.role == "planning":
+            return redirect(url_for("planning_view"))
+
+        return redirect(url_for("index"))
+
+    return redirect(url_for("login"))
 
 # ---- Dashboard ----
 @app.route("/index")
